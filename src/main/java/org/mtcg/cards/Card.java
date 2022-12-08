@@ -113,7 +113,7 @@ public abstract class Card implements Attackable {
         }*/
         else {
             Effectiveness e = this.calcElementFactor(opponent);
-            boolean wins=false;
+            boolean wins;
             System.out.print(this.damage+" VS "+opponent.damage+" -> ");
             switch (e){
                 case effective:
