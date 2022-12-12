@@ -1,11 +1,18 @@
-package org.mtcg.cards;
+package org.mtcg.Cards;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.UUID;
 
 public abstract class Card implements Attackable {
     protected final float damage;
 
+    protected final UUID id;
     protected Elements element;
 
     public Card(float damage, int element) {
+        this.id = UUID.randomUUID();
         this.damage = damage;
         switch(element){
             case(0):
@@ -71,46 +78,62 @@ public abstract class Card implements Attackable {
             return false;
         }
     }
+
+    private boolean checkSpecialMonsterCases(Card opponent) {
+        /* Cases to consider for no Attack:
+        Goblin -> Dragon
+        Ork -> Wizzard
+        Dragon -> FireElve
+         */
+        Monstercard tempA = (Monstercard) this;
+        Monstercard tempB = (Monstercard) opponent;
+        switch (tempA.getType()){
+            case Goblin:
+                if(tempB.getType()==Monsters.Dragon){
+                    System.out.println("Goblin is to afraid to attack...");
+                    return false;
+                }
+                break;
+            case Ork:
+                if(tempB.getType()==Monsters.Wizzard){
+                    System.out.println("The Ork is controlled by Wizzard and has to abort the attack..");
+                    return false;
+                }
+                break;
+            case Dragon:
+                if(tempB.getType()==Monsters.Elve && tempB.element == Elements.Fire){
+                    System.out.println("The Dragon recognizes his former childhood friend and decides to spare him..");
+                    return false;
+                }
+                break;
+        }
+        return true;
+    }
+
     //could you use an override annotation here?
     public Card attack(Card opponent){
         //three cases pure monster fight, pure spell fight, mixed fight
         boolean selfIsMonster = this instanceof Monstercard;
         boolean opponentIsMonster = opponent instanceof Monstercard;
 
-        System.out.print("PlayerA: "+this.toString().concat(" ("));
-        System.out.print(this.damage+" Damage) vs PlayerB: "+ opponent.toString()+" ("+ opponent.damage+" Damage) => ");
+        System.out.print(this.toString().concat(" ("));
+        System.out.print(this.damage+" Damage) vs "+ opponent.toString()+" ("+ opponent.damage+" Damage) => ");
         if(selfIsMonster && opponentIsMonster) {
-            //compare no effects
-            if(winsBattle(this.damage, opponent.damage)){
-                return this;
+            if(checkSpecialMonsterCases(opponent))
+            {
+                //compare no effects
+                if(winsBattle(this.damage, opponent.damage)){
+                    return this;
+                }
+                else {
+                    return opponent;
+                }
             }
             else {
                 return opponent;
             }
-        } /*else if (selfIsMonster || opponentIsMonster) {
-            Effectiveness e = this.calcElementFactor(opponent);
-            boolean wins=false;
-            System.out.print(this.damage+" VS "+opponent.damage+" -> ");
-            switch (e){
-                case effective:
-                    wins = winsBattle(this.damage*2, (opponent.damage/2));
-                    System.out.print(this.damage*2+" VS "+ opponent.damage/2+" => ");
-                    break;
-                case not_effective:
-                    wins = winsBattle(this.damage/2, (opponent.damage*2));
-                    System.out.print(this.damage/2+" VS "+ opponent.damage*2+" => ");
-                    break;
-                default:
-                    wins = winsBattle(this.damage, opponent.damage);
-                    System.out.print(this.damage+" Damage) vs "+ opponent.toString()+" ("+ opponent.damage+") => ");
-            }
-            if(wins){
-                return this;
-            }
-            else {
-                return opponent;
-            }
-        }*/
+        }
+        // pure Spellfights and mixed fights
         else {
             Effectiveness e = this.calcElementFactor(opponent);
             boolean wins;

@@ -1,8 +1,10 @@
-package org.mtcg.user;
+package org.mtcg.User;
 
-import org.mtcg.cards.Card;
-import org.mtcg.game.Deck;
-import org.mtcg.game.Stack;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.mtcg.Cards.Card;
+import org.mtcg.Game.Deck;
+import org.mtcg.Game.Stack;
 
 import java.util.*;
 
@@ -14,23 +16,29 @@ public class User {
 
     private Stack cardStack;
 
-    public User(String username, String password) {
-        this.setUsername(username);
+    @JsonCreator
+    public User(@JsonProperty("Username") String username, @JsonProperty("Password")  String password) {
+        this.username = username;
         this.password = password;
         this.coins = 20;
         this.cardStack = new Stack();
         this.deck = new Deck();
-        this.chooseDeck();
+        //this.chooseDeck();
     }
+
+    public String getPassword() {
+        return password;
+    }
+
     public void copyCardsToDeck(int[] cardIndexes){
         for(int index : cardIndexes)
         {
             Card c = this.cardStack.getCard(index);
             this.deck.addCard(c);
         }
-        for (int index : cardIndexes)
+        for (int i=0; i < cardIndexes.length; i++)
         {
-            Card c = this.cardStack.getCard(index);
+            Card c = this.cardStack.getCard(cardIndexes[i]-i);
             this.cardStack.removeCard(c);
         }
     }

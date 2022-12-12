@@ -1,8 +1,8 @@
-package org.mtcg.game;
+package org.mtcg.Game;
 
-import org.mtcg.cards.Card;
-import org.mtcg.cards.Monstercard;
-import org.mtcg.cards.Spellcard;
+import org.mtcg.Cards.Card;
+import org.mtcg.Cards.Monstercard;
+import org.mtcg.Cards.Spellcard;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -17,7 +17,7 @@ public class Stack {
         {
             int randDamage = rand.nextInt(1, 30);
             int randElement = rand.nextInt(0,3);
-            int randMonster = rand.nextInt(0,7);
+            int randMonster = rand.nextInt(0,2);
             int spellOrMonster = rand.nextInt(0,2);
 
             Card c;

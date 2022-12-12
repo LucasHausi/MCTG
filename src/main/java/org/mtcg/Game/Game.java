@@ -1,7 +1,7 @@
-package org.mtcg.game;
+package org.mtcg.Game;
 
-import org.mtcg.cards.Card;
-import org.mtcg.user.User;
+import org.mtcg.Cards.Card;
+import org.mtcg.User.User;
 
 import java.util.concurrent.TimeUnit;
 
@@ -11,7 +11,7 @@ public class Game {
 
     public void startGame()
     {
-        printIntro();
+        //printIntro();
         User player1 = new User("PlayerA","pwd1234");
         User player2 = new User("PlayerB","pwd1234");
 
@@ -20,7 +20,17 @@ public class Game {
             System.out.println(("Round "+i));
             Card c1 = player1.getCardToAttack();
             Card c2 = player2.getCardToAttack();
-            Card winner = c1.attack(c2);
+            Card winner;
+            if(i%2==0)
+            {
+                System.out.println(player1.getUsername()+" attacks "+ player2.getUsername());
+                winner = c1.attack(c2);
+            }
+            else{
+                System.out.println(player2.getUsername()+" attacks"+player1.getUsername());
+                winner = c2.attack(c1);
+            }
+
             if(c1 == winner)
             {
                 System.out.println(c1+" defeats "+c2);

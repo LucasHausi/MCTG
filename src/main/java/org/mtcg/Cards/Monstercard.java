@@ -1,7 +1,12 @@
-package org.mtcg.cards;
+package org.mtcg.Cards;
 import java.lang.*;
+import java.util.UUID;
 
 public class Monstercard extends Card{
+
+    public Monsters getType() {
+        return type;
+    }
 
     private Monsters type;
     public Monstercard(float damage, int element, int type)
@@ -32,7 +37,7 @@ public class Monstercard extends Card{
         }
     }
 
-    public String toString() {
+        public String toString() {
         StringBuilder sb = new StringBuilder();
         if(this.element != Elements.Normal)
         {

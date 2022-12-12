@@ -1,4 +1,4 @@
-package org.mtcg.cards;
+package org.mtcg.Cards;
 
 public enum Monsters {
     Dragon,
