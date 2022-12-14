@@ -7,7 +7,6 @@ import java.util.UUID;
 
 public abstract class Card implements Attackable {
     protected final float damage;
-
     protected final UUID id;
     protected Elements element;
 
@@ -24,6 +23,12 @@ public abstract class Card implements Attackable {
             default:
                 this.element = Elements.Normal;
         }
+    }
+    //Constructor when a admin creates Cards
+    public Card(UUID id, float damage, Elements element){
+        this.id = id;
+        this.damage = damage;
+        this.element = element;
     }
     public float getDamage() {
         return damage;

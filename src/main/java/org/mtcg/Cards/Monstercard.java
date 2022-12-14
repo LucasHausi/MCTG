@@ -37,7 +37,13 @@ public class Monstercard extends Card{
         }
     }
 
-        public String toString() {
+    //Constructor when a admin creates Cards
+    public Monstercard(UUID id, float damage, Elements element, Monsters type){
+        super(id, damage, element);
+        this.type = type;
+    }
+
+    public String toString() {
         StringBuilder sb = new StringBuilder();
         if(this.element != Elements.Normal)
         {

@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mtcg.Cards.Card;
 import org.mtcg.Cards.Package;
+import org.mtcg.Cards.SimpleCard;
+import org.mtcg.Cards.SimpleCardMapper;
 import org.mtcg.User.User;
 
 import java.io.*;
@@ -87,6 +89,7 @@ public class HttpServer {
                 .findFirst()
                 .orElse(null);
     }
+
     public void processRequest(RequestContext rc) throws JsonProcessingException {
         User u1;
         User u2;
@@ -119,8 +122,10 @@ public class HttpServer {
                 //create Packages (done by an admin)
                 //check if the Auth Token is valid
                 ObjectMapper mapper = new ObjectMapper();
-                Card[] cards = mapper.readValue(rc.getBody(), Card[].class);
-                System.out.println("Cards in Package"+cards);
+                SimpleCard[] simpleCards = mapper.readValue(rc.getBody(), SimpleCard[].class);
+                SimpleCardMapper scm = new SimpleCardMapper();
+                Package p = scm.mapSimpleCardsToCards(simpleCards);
+                p.print();
                 break;
         }
         //set to null for garbage collector
