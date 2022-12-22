@@ -3,6 +3,7 @@ package org.mtcg.User;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.mtcg.Cards.Card;
+import org.mtcg.Cards.Package;
 
 import java.util.*;
 
@@ -97,7 +98,7 @@ public class User {
         }
         //check if there are duplicates
         //Sets do not allow duplicate entries, so check if adding to one is possible
-        Set<String> set = new HashSet<String>();
+        Set<String> set = new HashSet<>();
         for(String splitElement : splitInput){
             if(set.add(splitElement)== false){
                 System.out.println("You can choose a card only one time");
@@ -111,8 +112,7 @@ public class User {
     {
         Random rand = new Random();
         int randIndex = rand.nextInt(0,this.deck.getDeckSize());
-        Card c = this.deck.getCard(randIndex);
-        return c;
+        return this.deck.getCard(randIndex);
     }
     public boolean removeCard(Card c){
         return this.deck.removeCard(c);
@@ -123,11 +123,42 @@ public class User {
     public String getUsername() {
         return username;
     }
+    public void acquirePackage(Package p){
+        boolean errWhenAddingCards = false;
+        //variable to store the amount of successful purchased cards
+        int succBought = 0;
+        //add all Cards to Stack
+        for(Card c : p.getCards()){
+            //check if the card could be added to the stack
+            if(this.cardStack.addCard(c)){
+                succBought++;
+            }else{
+                errWhenAddingCards = true;
+            }
+        }
 
-    public void setUsername(String username) {
-        this.username = username;
+        if(errWhenAddingCards)
+        {
+            System.out.println(5-succBought+" cards could not be added because the id was taken already");
+        }else{
+            System.out.println("The user "+username+" successfully acquired a package");
+        }
+        this.coins -= succBought;
     }
-
+    public boolean hasEnoughMoney(){
+        if (this.coins >= 5){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    //simplify this methods call somehow??
+    public void printStack(){
+        this.cardStack.printStack();
+    }
+    public void printDeck(){
+        this.deck.printDeck();
+    }
     // DEV Functions:
     public void printDeckSize()
     {

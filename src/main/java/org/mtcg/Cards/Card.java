@@ -24,7 +24,7 @@ public abstract class Card implements Attackable {
                 this.element = Elements.Normal;
         }
     }
-    //Constructor when a admin creates Cards
+    //Constructor when an admin creates Cards
     public Card(UUID id, float damage, Elements element){
         this.id = id;
         this.damage = damage;
@@ -32,6 +32,10 @@ public abstract class Card implements Attackable {
     }
     public float getDamage() {
         return damage;
+    }
+
+    public UUID getId() {
+        return id;
     }
     Effectiveness calcElementFactor(Card opponent)
     {

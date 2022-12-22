@@ -32,12 +32,11 @@ public class Deck {
         }
         return false;
     }
-
-    //DEV Functions
     public void printDeck(){
         for(Card c : cards)
         {
             System.out.println(c);
         }
     }
+    //DEV Functions
 }

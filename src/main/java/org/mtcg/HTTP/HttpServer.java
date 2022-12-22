@@ -1,13 +1,12 @@
 package org.mtcg.HTTP;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.mtcg.Cards.Package;
 import org.mtcg.Cards.SimpleCard;
 import org.mtcg.Cards.SimpleCardMapper;
-import org.mtcg.Game.Store;
 import org.mtcg.User.User;
-
+import org.mtcg.controller.StoreController;
+import org.mtcg.controller.TokenController;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -15,8 +14,8 @@ import java.util.*;
 
 public class HttpServer {
     //replace later with DB conection to Userdatabase
-    Set<User> users = new HashSet<>();
-    Store store = new Store();
+    HashMap<User, String> users = new HashMap<>();
+    StoreController storeController = new StoreController();
     public void start(){
         try(ServerSocket serverSocket = new ServerSocket(10001)){
             while(true){
@@ -83,41 +82,42 @@ public class HttpServer {
         requestContext.setBody(new String(buffer));
         return requestContext;
     }
-
-    User getUserByUsername(String username){
-        return users.stream()
-                .filter(tempUser -> username.equals(tempUser.getUsername()))
-                .findFirst()
-                .orElse(null);
-    }
-
     public void processRequest(RequestContext rc) throws JsonProcessingException {
         User u1;
         User u2;
+        String sentToken;
         switch (rc.getPath()){
             case("/users"):
                 u1 = new ObjectMapper().readValue(rc.getBody(), User.class);
                 u2 = getUserByUsername(u1.getUsername());
                 if(u2 == null){
-                    users.add(u1);
+                    users.put(u1, null);
                     System.out.println(u1.getUsername()+" was created");
+
                 }else {
                     System.out.println("This user does already exist!");
                 }
                 break;
             case("/sessions"):
-                //create dummy to login
-                //users.add(new User("kienboec","daniel"));
+                //create dummy user
+                this.users.put(new User("kienboec","daniel"),null);
 
                 u1 = new ObjectMapper().readValue(rc.getBody(), User.class);
                 u2 = getUserByUsername(u1.getUsername());
                 if(u2==null){
                     System.out.println("This user does not exist");
                 }else{
-                    if(u2.getPassword().equals(u2.getPassword())){
+                    if(u2.getPassword().equals(u1.getPassword())){
                         System.out.println("Login was successful");
+                        this.users.put(u2, TokenController.generateNewAuthToken());
+                    }
+                    else{
+                        System.out.println("Wrong password");
                     }
                 }
+                this.users.entrySet().forEach(entry -> {
+                    System.out.println(entry.getKey().getUsername()+" "+entry.getValue());
+                });
                 break;
             case("/packages"):
                 //create Packages (done by an admin)
@@ -127,15 +127,88 @@ public class HttpServer {
                 SimpleCardMapper scm = new SimpleCardMapper();
                 Package p = scm.mapSimpleCardsToCards(simpleCards);
                 //p.print();
-                store.addPackage(p);
+                storeController.store.addPackage(p);
                 break;
             case("/transactions/packages"):
                 //acquire Packages
                 //check if the Auth Token is valid
-
+                if((sentToken = rc.getAuthToken())!=null)
+                {
+                    if(checkAuthToken(sentToken)){
+                        u1 = getUserByAuthToken(sentToken);
+                        storeController.sellPackage(u1);
+                    }
+                    else{
+                        System.out.println("Wrong authentication token");
+                    }
+                }else{
+                    System.out.println("No authentication token");
+                }
+                break;
+            case("/cards"):
+                //show all cards in the users stack
+                //check if the Auth Token is valid
+                if((sentToken = rc.getAuthToken())!=null)
+                {
+                    if(checkAuthToken(sentToken)){
+                        u1 = getUserByAuthToken(sentToken);
+                        u1.printStack();
+                    }
+                    else{
+                        System.out.println("Wrong authentication Token");
+                    }
+                }else{
+                    System.out.println("No authentication token");
+                }
+                break;
+            case("/deck"):
+                //show all cards in the users stack
+                //check if the Auth Token is valid
+                if((sentToken = rc.getAuthToken())!=null)
+                {
+                    if(checkAuthToken(sentToken)){
+                        u1 = getUserByAuthToken(sentToken);
+                        switch (rc.getHttpVerb()){
+                            case("GET"):
+                                //print the unconfigured deck
+                                u1.printDeck();
+                                break;
+                            case("PUT"):
+                                //configureDeck
+                                System.out.println("PUT");
+                                break;
+                        }
+                    }
+                    else{
+                        System.out.println("Wrong authentication Token");
+                    }
+                }else{
+                    System.out.println("No authentication token");
+                }
+                break;
+            default:
+                System.out.println("No route found!");
         }
         //set to null for garbage collector
         u1=null;
         u2=null;
+    }
+
+    //DEV Function
+    User getUserByUsername(String username){
+        return users.entrySet().stream()
+                .filter(tempUser -> username.equals(tempUser.getKey().getUsername()))
+                .map(Map.Entry::getKey).findFirst()
+                .orElse(null);
+    }
+    User getUserByAuthToken(String sentToken)
+    {
+        return this.users.entrySet().stream()
+                .filter(tempUser -> sentToken.equals(tempUser.getValue()))
+                .map(Map.Entry::getKey).findFirst()
+                .orElse(null);
+    }
+    boolean checkAuthToken(String sentToken){
+        return this.users.containsValue(sentToken);
     }
 }

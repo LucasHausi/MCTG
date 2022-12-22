@@ -39,6 +39,13 @@ public class RequestContext {
     public String getBody() {
         return body;
     }
+    public String getAuthToken(){
+        String s =  this.headers.stream()
+                .filter(tempHeader -> "Authorization".equals(tempHeader.getName()))
+                .findFirst().map(Header::getValue)
+                .orElse(null);
+        return s;
+    }
 
     public void setBody(String body) {
         this.body = body;

@@ -6,12 +6,14 @@ import org.mtcg.Cards.Spellcard;
 
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.UUID;
 
 public class Stack {
 
     private ArrayList<Card> cards;
     public Stack() {
-        Random rand = new Random();
+        cards = new ArrayList<>();
+        /*Random rand = new Random();
         this.cards = new ArrayList<Card>();
         for(int i=0; i < 10; i++)
         {
@@ -32,11 +34,28 @@ public class Stack {
             this.addCard(c);
             // set to Null for GarbageCollector
             c = null;
-        }
+        }*/
     }
 
-    public void addCard(Card c){
-        this.cards.add(c);
+    public boolean cardExists(UUID id){
+        boolean exists = false;
+        for(Card c : this.cards){
+            if(c.getId().equals(id)){
+                exists = true;
+            }
+        }
+        return exists;
+    }
+    public boolean addCard(Card c){
+        //check if the id of the card is not taken already
+        if(cardExists(c.getId()) == false){
+            this.cards.add(c);
+            return true;
+        }else{
+            //Cant add card because the id already exists
+            return false;
+        }
+
     }
 
     public ArrayList<Card> getCards() {
@@ -55,7 +74,8 @@ public class Stack {
     public void printStack(){
         for(int i=0; i < this.cards.size(); i++){
             StringBuilder sb = new StringBuilder();
-            sb.append(i);
+            sb.append("ID: ");
+            sb.append(this.cards.get(i).getId());
             sb.append(": ");
             sb.append(this.cards.get(i).toString());
             sb.append(" with damage ");
