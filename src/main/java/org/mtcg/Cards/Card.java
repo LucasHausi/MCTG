@@ -120,19 +120,17 @@ public abstract class Card implements Attackable {
         //three cases pure monster fight, pure spell fight, mixed fight
         boolean selfIsMonster = this instanceof Monstercard;
         boolean opponentIsMonster = opponent instanceof Monstercard;
+        boolean wins;
 
         System.out.print(this.toString().concat(" ("));
         System.out.print(this.damage+" Damage) vs "+ opponent.toString()+" ("+ opponent.damage+" Damage) => ");
+        // pure monster fight
         if(selfIsMonster && opponentIsMonster) {
+            //if false is returned here then there is no attack
             if(checkSpecialMonsterCases(opponent))
             {
                 //compare no effects
-                if(winsBattle(this.damage, opponent.damage)){
-                    return this;
-                }
-                else {
-                    return opponent;
-                }
+                wins = winsBattle(this.damage, opponent.damage);
             }
             else {
                 return opponent;
@@ -141,7 +139,6 @@ public abstract class Card implements Attackable {
         // pure Spellfights and mixed fights
         else {
             Effectiveness e = this.calcElementFactor(opponent);
-            boolean wins;
             System.out.print(this.damage+" VS "+opponent.damage+" -> ");
             switch (e){
                 case effective:
@@ -154,13 +151,13 @@ public abstract class Card implements Attackable {
                     break;
                 default:
                     wins = winsBattle(this.damage, opponent.damage);
+                }
             }
-            if(wins){
-                return this;
-            }
-            else {
-                return opponent;
-            }
+        if(wins){
+            return this;
+        }
+        else {
+            return opponent;
         }
     }
 }

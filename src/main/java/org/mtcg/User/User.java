@@ -3,8 +3,6 @@ package org.mtcg.User;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.mtcg.Cards.Card;
-import org.mtcg.Game.Deck;
-import org.mtcg.Game.Stack;
 
 import java.util.*;
 

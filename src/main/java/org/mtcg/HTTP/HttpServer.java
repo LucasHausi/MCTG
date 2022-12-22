@@ -2,10 +2,10 @@ package org.mtcg.HTTP;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.mtcg.Cards.Card;
 import org.mtcg.Cards.Package;
 import org.mtcg.Cards.SimpleCard;
 import org.mtcg.Cards.SimpleCardMapper;
+import org.mtcg.Game.Store;
 import org.mtcg.User.User;
 
 import java.io.*;
@@ -16,8 +16,9 @@ import java.util.*;
 public class HttpServer {
     //replace later with DB conection to Userdatabase
     Set<User> users = new HashSet<>();
+    Store store = new Store();
     public void start(){
-        try(ServerSocket serverSocket = new ServerSocket(3005)){
+        try(ServerSocket serverSocket = new ServerSocket(10001)){
             while(true){
                 try(final Socket socket = serverSocket.accept()){
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -125,8 +126,13 @@ public class HttpServer {
                 SimpleCard[] simpleCards = mapper.readValue(rc.getBody(), SimpleCard[].class);
                 SimpleCardMapper scm = new SimpleCardMapper();
                 Package p = scm.mapSimpleCardsToCards(simpleCards);
-                p.print();
+                //p.print();
+                store.addPackage(p);
                 break;
+            case("/transactions/packages"):
+                //acquire Packages
+                //check if the Auth Token is valid
+
         }
         //set to null for garbage collector
         u1=null;

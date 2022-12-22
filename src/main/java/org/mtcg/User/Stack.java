@@ -1,4 +1,4 @@
-package org.mtcg.Game;
+package org.mtcg.User;
 
 import org.mtcg.Cards.Card;
 import org.mtcg.Cards.Monstercard;
