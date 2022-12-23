@@ -1,25 +1,31 @@
 package org.mtcg.HTTP;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.mtcg.Cards.Package;
 import org.mtcg.Cards.SimpleCard;
 import org.mtcg.Cards.SimpleCardMapper;
 import org.mtcg.User.User;
 import org.mtcg.controller.StoreController;
 import org.mtcg.controller.TokenController;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
 
+
 public class HttpServer {
     //replace later with DB conection to Userdatabase
     HashMap<User, String> users = new HashMap<>();
     StoreController storeController = new StoreController();
-    public void start(){
-        try(ServerSocket serverSocket = new ServerSocket(10001)){
-            while(true){
-                try(final Socket socket = serverSocket.accept()){
+
+    public void start() {
+        try (ServerSocket serverSocket = new ServerSocket(10001)) {
+            while (true) {
+                try (final Socket socket = serverSocket.accept()) {
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     final RequestContext requestContext = parseInput(bufferedReader);
 
@@ -27,7 +33,7 @@ public class HttpServer {
                     try {
                         //do something with the request context e.g. login, start game usw
                         processRequest(requestContext);
-                    }catch (JsonProcessingException ex2){
+                    } catch (JsonProcessingException ex2) {
                         System.out.println("Error when converting the body");
                         System.err.println(ex2);
                     }
@@ -37,13 +43,13 @@ public class HttpServer {
                     sendResponse(bw, HttpStatus.OK);
                 }
             }
-        }catch (IOException ex1){
+        } catch (IOException ex1) {
             System.err.println(ex1);
         }
     }
 
     public void sendResponse(BufferedWriter bw, HttpStatus status) throws IOException {
-        switch (status){
+        switch (status) {
             case OK -> bw.write("HTTP/1.1 200 OK");
             case CREATED -> bw.write("HTTP/1.1 201 Created");
             case NO_CONTENT -> bw.write("HTTP/1.1 204 No Content");
@@ -55,6 +61,7 @@ public class HttpServer {
         bw.newLine();
         bw.flush();
     }
+
     public RequestContext parseInput(BufferedReader br) throws IOException {
 
         RequestContext requestContext = new RequestContext();
@@ -82,44 +89,45 @@ public class HttpServer {
         requestContext.setBody(new String(buffer));
         return requestContext;
     }
+
     public void processRequest(RequestContext rc) throws JsonProcessingException {
         User u1;
         User u2;
         String sentToken;
-        switch (rc.getPath()){
-            case("/users"):
+        String path = rc.getPath();
+        switch (path) {
+            case ("/users"):
                 u1 = new ObjectMapper().readValue(rc.getBody(), User.class);
                 u2 = getUserByUsername(u1.getUsername());
-                if(u2 == null){
+                if (u2 == null) {
                     users.put(u1, null);
-                    System.out.println(u1.getUsername()+" was created");
+                    System.out.println(u1.getUsername() + " was created");
 
-                }else {
+                } else {
                     System.out.println("This user does already exist!");
                 }
                 break;
-            case("/sessions"):
+            case ("/sessions"):
                 //create dummy user
-                this.users.put(new User("kienboec","daniel"),null);
+                this.users.put(new User("kienboec", "daniel"), null);
 
                 u1 = new ObjectMapper().readValue(rc.getBody(), User.class);
                 u2 = getUserByUsername(u1.getUsername());
-                if(u2==null){
+                if (u2 == null) {
                     System.out.println("This user does not exist");
-                }else{
-                    if(u2.getPassword().equals(u1.getPassword())){
+                } else {
+                    if (u2.getPassword().equals(u1.getPassword())) {
                         System.out.println("Login was successful");
                         this.users.put(u2, TokenController.generateNewAuthToken());
-                    }
-                    else{
+                    } else {
                         System.out.println("Wrong password");
                     }
                 }
                 this.users.entrySet().forEach(entry -> {
-                    System.out.println(entry.getKey().getUsername()+" "+entry.getValue());
+                    System.out.println(entry.getKey().getUsername() + " " + entry.getValue());
                 });
                 break;
-            case("/packages"):
+            case ("/packages"):
                 //create Packages (done by an admin)
                 //check if the Auth Token is valid
                 ObjectMapper mapper = new ObjectMapper();
@@ -129,86 +137,119 @@ public class HttpServer {
                 //p.print();
                 storeController.store.addPackage(p);
                 break;
-            case("/transactions/packages"):
+            case ("/transactions/packages"):
                 //acquire Packages
                 //check if the Auth Token is valid
-                if((sentToken = rc.getAuthToken())!=null)
-                {
-                    if(checkAuthToken(sentToken)){
+                if ((sentToken = rc.getAuthToken()) != null) {
+                    if (checkAuthToken(sentToken)) {
                         u1 = getUserByAuthToken(sentToken);
                         storeController.sellPackage(u1);
-                    }
-                    else{
+                    } else {
                         System.out.println("Wrong authentication token");
                     }
-                }else{
+                } else {
                     System.out.println("No authentication token");
                 }
                 break;
-            case("/cards"):
+            case ("/cards"):
                 //show all cards in the users stack
                 //check if the Auth Token is valid
-                if((sentToken = rc.getAuthToken())!=null)
-                {
-                    if(checkAuthToken(sentToken)){
+                if ((sentToken = rc.getAuthToken()) != null) {
+                    if (checkAuthToken(sentToken)) {
                         u1 = getUserByAuthToken(sentToken);
                         u1.printStack();
-                    }
-                    else{
+                    } else {
                         System.out.println("Wrong authentication Token");
                     }
-                }else{
+                } else {
                     System.out.println("No authentication token");
                 }
                 break;
-            case("/deck"):
+            case ("/deck"):
                 //show all cards in the users stack
                 //check if the Auth Token is valid
-                if((sentToken = rc.getAuthToken())!=null)
-                {
-                    if(checkAuthToken(sentToken)){
+                if ((sentToken = rc.getAuthToken()) != null) {
+                    if (checkAuthToken(sentToken)) {
                         u1 = getUserByAuthToken(sentToken);
-                        switch (rc.getHttpVerb()){
-                            case("GET"):
+                        switch (rc.getHttpVerb()) {
+                            case ("GET"):
                                 //print the unconfigured deck
                                 u1.printDeck();
                                 break;
-                            case("PUT"):
+                            case ("PUT"):
+                                storeController.sellPackage(u1);
+                                storeController.sellPackage(u1);
+                                storeController.sellPackage(u1);
                                 //configureDeck
-                                System.out.println("PUT");
+                                //List with Card UUIDs
+                                List<UUID> cardIDs = new ArrayList<>();
+                                try {
+                                    JSONArray jsonArr = new JSONArray(rc.getBody());
+                                    for (int i = 0; i < jsonArr.length(); i++) {
+                                        cardIDs.add(UUID.fromString(jsonArr.get(i).toString()));
+                                    }
+                                } catch (JSONException e) {
+                                    System.err.println(e);
+                                }
+                                if (cardIDs.size() == 4) {
+                                    u1.setDeck(cardIDs);
+                                    u1.printDeck();
+                                } else {
+                                    System.out.println("You need to provide 4 Cards to set your Deck - You have chosen: " + cardIDs.size());
+                                }
                                 break;
                         }
-                    }
-                    else{
+                    } else {
                         System.out.println("Wrong authentication Token");
                     }
-                }else{
+                } else {
+                    System.out.println("No authentication token");
+                }
+                break;
+            case ("/deck?format=plain"):
+                //show all cards in the users stack
+                //check if the Auth Token is valid
+                if ((sentToken = rc.getAuthToken()) != null) {
+                    if (checkAuthToken(sentToken)) {
+                        u1 = getUserByAuthToken(sentToken);
+                        u1.printDeckPlain();
+                    } else {
+                        System.out.println("Wrong authentication Token");
+                    }
+                } else {
                     System.out.println("No authentication token");
                 }
                 break;
             default:
-                System.out.println("No route found!");
+                if(path.contains("/users/")){
+                    String username = path.replace("/users/","");
+                    u1 = getUserByUsername(username);
+
+                }else{
+                    System.out.println("No route found!"+ rc.getPath());
+                }
         }
         //set to null for garbage collector
-        u1=null;
-        u2=null;
+        u1 = null;
+        u2 = null;
     }
 
     //DEV Function
-    User getUserByUsername(String username){
+    public User getUserByUsername(String username) {
         return users.entrySet().stream()
                 .filter(tempUser -> username.equals(tempUser.getKey().getUsername()))
                 .map(Map.Entry::getKey).findFirst()
                 .orElse(null);
     }
-    User getUserByAuthToken(String sentToken)
-    {
+
+    User getUserByAuthToken(String sentToken) {
         return this.users.entrySet().stream()
                 .filter(tempUser -> sentToken.equals(tempUser.getValue()))
                 .map(Map.Entry::getKey).findFirst()
                 .orElse(null);
     }
-    boolean checkAuthToken(String sentToken){
+
+    boolean checkAuthToken(String sentToken) {
         return this.users.containsValue(sentToken);
     }
 }

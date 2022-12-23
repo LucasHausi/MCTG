@@ -45,12 +45,19 @@ public class Monstercard extends Card{
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        sb.append("/* ");
         if(this.element != Elements.Normal)
         {
             sb.append(this.element);
         }
         sb.append(this.type);
+        sb.append(" - Damage ");
+        sb.append(this.damage);
+        sb.append("*/ ");
         return sb.toString();
+    }
+    public String toPlainString(){
+        return this.id+" "+this.type+" "+this.element+" "+this.damage;
     }
 
 }

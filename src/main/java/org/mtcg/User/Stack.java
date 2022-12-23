@@ -70,6 +70,12 @@ public class Stack {
         return this.cards.get(index);
     }
 
+    public  Card getCard(UUID id){
+        return this.cards.stream()
+                .filter(tempCard -> id.equals(tempCard.getId()))
+                .findFirst()
+                .orElse(null);
+    }
     // DEV Functions
     public void printStack(){
         for(int i=0; i < this.cards.size(); i++){

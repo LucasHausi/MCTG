@@ -118,7 +118,7 @@ public abstract class Card implements Attackable {
         }
         return true;
     }
-
+    public abstract String toPlainString();
     //could you use an override annotation here?
     public Card attack(Card opponent){
         //three cases pure monster fight, pure spell fight, mixed fight

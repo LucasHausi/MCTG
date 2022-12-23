@@ -32,11 +32,23 @@ public class Deck {
         }
         return false;
     }
-    public void printDeck(){
-        for(Card c : cards)
-        {
-            System.out.println(c);
+    public void printDeck(String format){
+        if(this.cards.isEmpty()){
+            System.out.println("The deck is currently empty");
+        }else{
+            for(Card c : cards)
+            {
+                switch (format){
+                    case ("plain"):
+                        System.out.println(c.toPlainString());
+                        break;
+                    default:
+                        System.out.println(c);
+                }
+
+            }
         }
+
     }
     //DEV Functions
 }

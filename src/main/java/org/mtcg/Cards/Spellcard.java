@@ -14,11 +14,17 @@ public class Spellcard extends Card{
     }
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        sb.append("/* ");
         if(this.element != Elements.Normal)
         {
             sb.append(this.element);
         }
-        sb.append("Spell");
+        sb.append("Spell - Damage ");
+        sb.append(this.damage);
+        sb.append(" */");
         return sb.toString();
+    }
+    public String toPlainString(){
+        return this.id+" Spell "+this.element+" "+this.damage;
     }
 }
