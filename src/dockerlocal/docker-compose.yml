@@ -1,0 +1,17 @@
+version: '3.1'
+
+services:
+  db-class-http:
+    image: postgres:15.1
+    restart: always
+    environment:
+      POSTGRES_USER: lucasHausi
+      POSTGRES_PASSWORD: secret5
+      POSTGRES_DB: mctgDB
+    ports:
+      - '5432:5432'
+    volumes:
+      - db_class:/var/lib/postgresql/data
+volumes:
+  db_class:
+    driver: local

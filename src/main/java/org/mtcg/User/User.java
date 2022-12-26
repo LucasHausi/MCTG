@@ -13,8 +13,9 @@ public class User {
     private int coins;
     private Deck deck;
     private Stack cardStack;
-    private String Bio;
-    private String Image;
+    private String nickname;
+    private String bio;
+    private String image;
 
     @JsonCreator
     public User(@JsonProperty("Username") String username, @JsonProperty("Password") String password) {
@@ -145,6 +146,14 @@ public class User {
     public void printDeckPlain(){
         System.out.println("Plain deck view");
         this.deck.printDeck("plain");
+    }
+    public void printUserData(){
+        System.out.println("Name: "+ this.username+"\nBio: "+this.bio+"\nImage: "+this.image);
+    }
+    public void setUserData(String name, String bio, String image){
+        this.nickname=name;
+        this.bio=bio;
+        this.image=image;
     }
 
     // DEV Functions:

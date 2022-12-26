@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 import org.mtcg.Cards.Package;
 import org.mtcg.Cards.SimpleCard;
 import org.mtcg.Cards.SimpleCardMapper;
@@ -18,7 +19,7 @@ import java.util.*;
 
 
 public class HttpServer {
-    //replace later with DB conection to Userdatabase
+    //replace later with DB connection to User-Database
     HashMap<User, String> users = new HashMap<>();
     StoreController storeController = new StoreController();
 
@@ -28,8 +29,6 @@ public class HttpServer {
                 try (final Socket socket = serverSocket.accept()) {
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     final RequestContext requestContext = parseInput(bufferedReader);
-
-                    //requestContext.print();
                     try {
                         //do something with the request context e.g. login, start game usw
                         processRequest(requestContext);
@@ -221,12 +220,42 @@ public class HttpServer {
                 }
                 break;
             default:
-                if(path.contains("/users/")){
-                    String username = path.replace("/users/","");
+                if (path.contains("/users/")) {
+                    String username = path.replace("/users/", "");
                     u1 = getUserByUsername(username);
+                    if (u1 != null) {
+                        if ((sentToken = rc.getAuthToken()) != null) {
+                            if (checkAuthToken(sentToken)) {
+                                u2 = getUserByAuthToken(sentToken);
+                                if(u1!=u2){
+                                    System.out.println("The username and the auth. token do not match!");
+                                    break;
+                                }
+                                switch (rc.getHttpVerb()) {
+                                    case ("GET"):
+                                        u1.printUserData();
+                                        break;
+                                    case ("PUT"):
+                                        try {
+                                            JSONObject jsonObject = new JSONObject(rc.getBody());
+                                            u1.setUserData(jsonObject.getString("Name"),jsonObject.getString("Bio"),jsonObject.getString("Image"));
+                                        } catch (JSONException e) {
+                                            System.err.println(e);
+                                        }
+                                        break;
+                                }
+                            } else {
+                                System.out.println("Wrong authentication Token");
+                            }
+                        } else {
+                            System.out.println("No authentication token");
+                        }
+                    } else {
+                        System.out.println("The user does not exist!");
+                    }
 
-                }else{
-                    System.out.println("No route found!"+ rc.getPath());
+                } else {
+                    System.out.println("No route found!" + rc.getPath());
                 }
         }
         //set to null for garbage collector
