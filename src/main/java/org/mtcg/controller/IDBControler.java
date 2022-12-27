@@ -1,6 +1,6 @@
 package org.mtcg.controller;
 
-import org.mtcg.User.User;
+import org.mtcg.user.User;
 
 import java.util.UUID;
 

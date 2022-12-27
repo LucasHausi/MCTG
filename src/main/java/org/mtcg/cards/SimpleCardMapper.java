@@ -1,4 +1,4 @@
-package org.mtcg.Cards;
+package org.mtcg.cards;
 
 import java.util.ArrayList;
 import java.util.UUID;

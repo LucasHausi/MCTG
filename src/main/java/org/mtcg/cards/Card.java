@@ -1,7 +1,4 @@
-package org.mtcg.Cards;
-
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+package org.mtcg.cards;
 
 import java.util.UUID;
 

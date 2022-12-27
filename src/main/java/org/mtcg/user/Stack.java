@@ -1,11 +1,8 @@
-package org.mtcg.User;
+package org.mtcg.user;
 
-import org.mtcg.Cards.Card;
-import org.mtcg.Cards.Monstercard;
-import org.mtcg.Cards.Spellcard;
+import org.mtcg.cards.Card;
 
 import java.util.ArrayList;
-import java.util.Random;
 import java.util.UUID;
 
 public class Stack {

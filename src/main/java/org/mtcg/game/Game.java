@@ -1,7 +1,7 @@
-package org.mtcg.Game;
+package org.mtcg.game;
 
-import org.mtcg.Cards.Card;
-import org.mtcg.User.User;
+import org.mtcg.cards.Card;
+import org.mtcg.user.User;
 
 import java.util.concurrent.TimeUnit;
 

@@ -1,8 +1,7 @@
 package org.mtcg.controller;
 
-import org.mtcg.Cards.Package;
-import org.mtcg.Game.Store;
-import org.mtcg.User.User;
+import org.mtcg.game.Store;
+import org.mtcg.user.User;
 
 public class StoreController {
     public static Store store = new Store();

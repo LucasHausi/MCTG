@@ -1,4 +1,4 @@
-package org.mtcg.Cards;
+package org.mtcg.cards;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

@@ -1,10 +1,13 @@
-package org.mtcg.User;
+package org.mtcg.user;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.mtcg.Cards.Card;
-import org.mtcg.Cards.Package;
+import org.mtcg.cards.Card;
+import org.mtcg.cards.Package;
 
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 public class User {
@@ -27,11 +30,43 @@ public class User {
         //this.chooseDeck();
     }
 
-    public String getPassword() {
-        return password;
+    public User(String username, String password, int coins, String nickname, String bio, String image) {
+        this.username = username;
+        this.password = password;
+        this.coins = coins;
+        this.deck = new Deck();
+        this.cardStack = new Stack();
+        this.nickname = nickname;
+        this.bio = bio;
+        this.image = image;
     }
 
+    public String getPassword() {
+        try {
+            // getInstance() method is called with algorithm SHA-512
+            MessageDigest md = MessageDigest.getInstance("SHA-512");
 
+            byte[] messageDigest = md.digest(password.getBytes());
+
+            // Convert byte array into signum representation
+            BigInteger no = new BigInteger(1, messageDigest);
+
+            // Convert message digest into hex value
+            String hashtext = no.toString(16);
+
+            // Add preceding 0s to make it 32 bit
+            while (hashtext.length() < 32) {
+                hashtext = "0" + hashtext;
+            }
+
+            return hashtext;
+        }
+
+        // error when generating hash
+        catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+    }
     void processDeckSelection(String input) {
         String[] splitInput = input.split("\\s");
         int[] cardIndexes = Arrays.stream(splitInput).mapToInt(Integer::parseInt).toArray();
@@ -154,6 +189,22 @@ public class User {
         this.nickname=name;
         this.bio=bio;
         this.image=image;
+    }
+
+    public int getCoins() {
+        return coins;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public String getBio() {
+        return bio;
+    }
+
+    public String getImage() {
+        return image;
     }
 
     // DEV Functions:

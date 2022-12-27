@@ -1,4 +1,4 @@
-package org.mtcg.Cards;
+package org.mtcg.cards;
 
 public enum Effectiveness {
     effective,

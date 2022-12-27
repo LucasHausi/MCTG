@@ -5,10 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.mtcg.Cards.Package;
-import org.mtcg.Cards.SimpleCard;
-import org.mtcg.Cards.SimpleCardMapper;
-import org.mtcg.User.User;
+import org.mtcg.cards.Package;
+import org.mtcg.cards.SimpleCard;
+import org.mtcg.cards.SimpleCardMapper;
+import org.mtcg.repository.InMemoryUserRepository;
+import org.mtcg.user.User;
 import org.mtcg.controller.StoreController;
 import org.mtcg.controller.TokenController;
 
@@ -20,7 +21,9 @@ import java.util.*;
 
 public class HttpServer {
     //replace later with DB connection to User-Database
-    HashMap<User, String> users = new HashMap<>();
+    //HashMap<User, String> users = new HashMap<>();
+    //new implementation with Respository
+    InMemoryUserRepository userRepository = new InMemoryUserRepository();
     StoreController storeController = new StoreController();
 
     public void start() {
@@ -97,10 +100,9 @@ public class HttpServer {
         switch (path) {
             case ("/users"):
                 u1 = new ObjectMapper().readValue(rc.getBody(), User.class);
-                u2 = getUserByUsername(u1.getUsername());
+                u2 = userRepository.getUserByUsername(u1.getUsername());
                 if (u2 == null) {
-                    users.put(u1, null);
-                    System.out.println(u1.getUsername() + " was created");
+                    userRepository.addUser(u1, null);
 
                 } else {
                     System.out.println("This user does already exist!");
@@ -108,23 +110,21 @@ public class HttpServer {
                 break;
             case ("/sessions"):
                 //create dummy user
-                this.users.put(new User("kienboec", "daniel"), null);
+                userRepository.addUser(new User("kienboec", "daniel"), null);
 
                 u1 = new ObjectMapper().readValue(rc.getBody(), User.class);
-                u2 = getUserByUsername(u1.getUsername());
+                u2 = userRepository.getUserByUsername(u1.getUsername());
                 if (u2 == null) {
                     System.out.println("This user does not exist");
                 } else {
                     if (u2.getPassword().equals(u1.getPassword())) {
                         System.out.println("Login was successful");
-                        this.users.put(u2, TokenController.generateNewAuthToken());
+                        userRepository.addUser(u2, TokenController.generateNewAuthToken());
                     } else {
                         System.out.println("Wrong password");
                     }
                 }
-                this.users.entrySet().forEach(entry -> {
-                    System.out.println(entry.getKey().getUsername() + " " + entry.getValue());
-                });
+                userRepository.printIMUserRepository();
                 break;
             case ("/packages"):
                 //create Packages (done by an admin)
@@ -140,8 +140,8 @@ public class HttpServer {
                 //acquire Packages
                 //check if the Auth Token is valid
                 if ((sentToken = rc.getAuthToken()) != null) {
-                    if (checkAuthToken(sentToken)) {
-                        u1 = getUserByAuthToken(sentToken);
+                    if (userRepository.checkAuthToken(sentToken)) {
+                        u1 = userRepository.getUserByAuthToken(sentToken);
                         storeController.sellPackage(u1);
                     } else {
                         System.out.println("Wrong authentication token");
@@ -154,8 +154,8 @@ public class HttpServer {
                 //show all cards in the users stack
                 //check if the Auth Token is valid
                 if ((sentToken = rc.getAuthToken()) != null) {
-                    if (checkAuthToken(sentToken)) {
-                        u1 = getUserByAuthToken(sentToken);
+                    if (userRepository.checkAuthToken(sentToken)) {
+                        u1 = userRepository.getUserByAuthToken(sentToken);
                         u1.printStack();
                     } else {
                         System.out.println("Wrong authentication Token");
@@ -168,8 +168,8 @@ public class HttpServer {
                 //show all cards in the users stack
                 //check if the Auth Token is valid
                 if ((sentToken = rc.getAuthToken()) != null) {
-                    if (checkAuthToken(sentToken)) {
-                        u1 = getUserByAuthToken(sentToken);
+                    if (userRepository.checkAuthToken(sentToken)) {
+                        u1 = userRepository.getUserByAuthToken(sentToken);
                         switch (rc.getHttpVerb()) {
                             case ("GET"):
                                 //print the unconfigured deck
@@ -209,8 +209,8 @@ public class HttpServer {
                 //show all cards in the users stack
                 //check if the Auth Token is valid
                 if ((sentToken = rc.getAuthToken()) != null) {
-                    if (checkAuthToken(sentToken)) {
-                        u1 = getUserByAuthToken(sentToken);
+                    if (userRepository.checkAuthToken(sentToken)) {
+                        u1 = userRepository.getUserByAuthToken(sentToken);
                         u1.printDeckPlain();
                     } else {
                         System.out.println("Wrong authentication Token");
@@ -222,11 +222,11 @@ public class HttpServer {
             default:
                 if (path.contains("/users/")) {
                     String username = path.replace("/users/", "");
-                    u1 = getUserByUsername(username);
+                    u1 = userRepository.getUserByUsername(username);
                     if (u1 != null) {
                         if ((sentToken = rc.getAuthToken()) != null) {
-                            if (checkAuthToken(sentToken)) {
-                                u2 = getUserByAuthToken(sentToken);
+                            if (userRepository.checkAuthToken(sentToken)) {
+                                u2 = userRepository.getUserByAuthToken(sentToken);
                                 if(u1!=u2){
                                     System.out.println("The username and the auth. token do not match!");
                                     break;
@@ -264,7 +264,7 @@ public class HttpServer {
     }
 
     //DEV Function
-    public User getUserByUsername(String username) {
+    /*public User getUserByUsername(String username) {
         return users.entrySet().stream()
                 .filter(tempUser -> username.equals(tempUser.getKey().getUsername()))
                 .map(Map.Entry::getKey).findFirst()
@@ -280,5 +280,5 @@ public class HttpServer {
 
     boolean checkAuthToken(String sentToken) {
         return this.users.containsValue(sentToken);
-    }
+    }*/
 }

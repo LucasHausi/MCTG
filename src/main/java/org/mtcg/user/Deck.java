@@ -1,6 +1,6 @@
-package org.mtcg.User;
+package org.mtcg.user;
 
-import org.mtcg.Cards.Card;
+import org.mtcg.cards.Card;
 
 import java.util.ArrayList;
 
