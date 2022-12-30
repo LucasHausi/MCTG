@@ -1,6 +1,7 @@
 package org.mtcg.game;
 
 import org.mtcg.cards.Package;
+import org.mtcg.repository.PostgresCardRepository;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,7 +11,7 @@ public class Store {
     List<Package> packages;
 
     public Store() {
-        this.packages = new ArrayList<>();
+        this.packages = PostgresCardRepository.initializieStore();
     }
 
     public void addPackage(Package p) {

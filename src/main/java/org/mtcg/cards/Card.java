@@ -31,6 +31,10 @@ public abstract class Card implements Attackable {
         return damage;
     }
 
+    public Elements getElement() {
+        return element;
+    }
+
     public UUID getId() {
         return id;
     }
@@ -116,6 +120,7 @@ public abstract class Card implements Attackable {
         return true;
     }
     public abstract String toPlainString();
+    public abstract String toFancyString();
     //could you use an override annotation here?
     public Card attack(Card opponent){
         //three cases pure monster fight, pure spell fight, mixed fight

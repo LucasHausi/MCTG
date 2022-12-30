@@ -9,11 +9,9 @@ import static java.lang.System.exit;
 
 public class Game {
 
-    public void startGame()
+    public void startGame(User player1, User player2)
     {
         //printIntro();
-        User player1 = new User("PlayerA","pwd1234");
-        User player2 = new User("PlayerB","pwd1234");
 
         for(int i=1; i <= 100;i++)
         {

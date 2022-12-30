@@ -42,8 +42,17 @@ public class Monstercard extends Card{
         super(id, damage, element);
         this.type = type;
     }
-
     public String toString() {
+        StringBuilder sb = new StringBuilder();
+        if (this.element != Elements.Normal) {
+            sb.append(this.element);
+        }
+
+        sb.append(this.type);
+        return sb.toString();
+    }
+    @Override
+    public String toFancyString() {
         StringBuilder sb = new StringBuilder();
         sb.append("/* ");
         if(this.element != Elements.Normal)
@@ -56,6 +65,7 @@ public class Monstercard extends Card{
         sb.append("*/ ");
         return sb.toString();
     }
+    @Override
     public String toPlainString(){
         return this.id+" "+this.type+" "+this.element+" "+this.damage;
     }

@@ -1,6 +1,8 @@
 package org.mtcg.controller;
 
+import org.mtcg.cards.Package;
 import org.mtcg.game.Store;
+import org.mtcg.repository.PostgresCardRepository;
 import org.mtcg.user.User;
 
 public class StoreController {
@@ -12,7 +14,9 @@ public class StoreController {
             //check if user has enough money
             if (u.hasEnoughMoney()) {
                 //get and remove Package and let the user acquire the package
-                u.acquirePackage(store.getRandPackage());
+                Package p = store.getRandPackage();
+                u.acquirePackage(p);
+                PostgresCardRepository.addOWNER(p,u);
             } else {
                 System.out.println("The user " + u.getUsername() + " has not enough money!");
             }

@@ -10,14 +10,13 @@ public class Main {
     public static void main(String[] args) {
 
         HttpServer server = new HttpServer();
-        PostgresCardRepository postgresCardRepository = new PostgresCardRepository(DataSource.getInstance());
-
+        server.start();
         /*PostgresUserRepository postgressUserRepository = new PostgresUserRepository(DataSource.getInstance());
         User u = postgressUserRepository.getUserByUsername("a");
         u.printUserData();
-        postgressUserRepository.PRINT_ALL_USERS();
-        server.start();
+        postgressUserRepository.PRINT_ALL_USERS();*/
+
         //Game round = new Game();
-        //round.startGame();*/
+        //round.startGame();
     }
 }

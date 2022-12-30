@@ -43,7 +43,7 @@ public class Deck {
                         System.out.println(c.toPlainString());
                         break;
                     default:
-                        System.out.println(c);
+                        System.out.println(c.toFancyString());
                 }
 
             }

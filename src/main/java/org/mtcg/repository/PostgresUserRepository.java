@@ -7,10 +7,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PostgresUserRepository implements UserRepository{
 
-    private final DBConnector dataSource;
+    private static DBConnector dataSource;
 
     public PostgresUserRepository(DBConnector dataSource){
         this.dataSource = dataSource;
@@ -36,13 +38,37 @@ public class PostgresUserRepository implements UserRepository{
         SELECT * FROM USERS WHERE username = ?;
         """;
 
-    private static final String ADD_User = """
+    private static final String ADD_USER = """
             INSERT INTO users (username, password, coins, nickname, bio, image) VALUES (?, ?, ?, ?, ?, ?)
             """;
 
-    public void addUser(User u){
+    private static final String ALL_USERS = """
+            SELECT * FROM USERS;
+            """;
+    private static final String UPDATE_USERDATA = """
+                UPDATE USERS
+                    SET NICKNAME = ?,
+                        BIO = ?,
+                        IMAGE = ?
+                    WHERE
+                        USERNAME = ?;
+            """;
+    public static void updateUserdata(String name, String bio, String image, String username){
         try (Connection c = dataSource.getConnection()) {
-            try (PreparedStatement ps = c.prepareStatement(ADD_User)) {
+            try (PreparedStatement ps = c.prepareStatement(UPDATE_USERDATA)) {
+                ps.setString(1, name);
+                ps.setString(2, bio);
+                ps.setString(3, image);
+                ps.setString(4, username);
+                ps.execute();
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("DB query failed", e);
+        }
+    }
+    public static void addUser(User u){
+        try (Connection c = dataSource.getConnection()) {
+            try (PreparedStatement ps = c.prepareStatement(ADD_USER)) {
                 ps.setString(1, u.getUsername());
                 ps.setString(2, u.getPassword());
                 ps.setInt(3, u.getCoins());
@@ -54,6 +80,30 @@ public class PostgresUserRepository implements UserRepository{
         } catch (SQLException e) {
             throw new IllegalStateException("DB query failed", e);
         }
+    }
+    public List<User> getAllUsers(){
+        List<User> users = new ArrayList<>();
+        try (Connection c = dataSource.getConnection()) {
+            try (PreparedStatement ps = c.prepareStatement(ALL_USERS)) {
+                ps.execute();
+                final ResultSet resultSet = ps.getResultSet();
+                while (resultSet.next()) {
+                    users.add(convertResultSetToUser(resultSet));
+                }
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("DB query failed", e);
+        }
+        return users;
+    };
+    private User convertResultSetToUser(ResultSet resultSet)  throws SQLException {
+        return new User(
+                resultSet.getString(1),
+                resultSet.getString(2),
+                resultSet.getInt(3),
+                resultSet.getString(4),
+                resultSet.getString(5),
+                resultSet.getString(6));
     }
     @Override
     public User getUserByUsername(String username) {
@@ -83,7 +133,7 @@ public class PostgresUserRepository implements UserRepository{
     //DEV Function
     public void PRINT_ALL_USERS(){
         try (Connection c = dataSource.getConnection()) {
-            try (PreparedStatement ps = c.prepareStatement("SELECT * FROM users")) {
+            try (PreparedStatement ps = c.prepareStatement(ALL_USERS)) {
                 ps.execute();
                 final ResultSet resultSet = ps.getResultSet();
                 while (resultSet.next()) {

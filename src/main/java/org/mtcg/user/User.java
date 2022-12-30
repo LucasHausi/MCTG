@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.mtcg.cards.Card;
 import org.mtcg.cards.Package;
+import org.mtcg.repository.PostgresUserRepository;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -23,7 +24,7 @@ public class User {
     @JsonCreator
     public User(@JsonProperty("Username") String username, @JsonProperty("Password") String password) {
         this.username = username;
-        this.password = password;
+        this.password = encryptSHA512(password);
         this.coins = 20;
         this.cardStack = new Stack();
         this.deck = new Deck();
@@ -36,12 +37,19 @@ public class User {
         this.coins = coins;
         this.deck = new Deck();
         this.cardStack = new Stack();
-        this.nickname = nickname;
+        if(nickname==null){
+            this.nickname = username;
+        }else{
+            this.nickname = nickname;
+        }
         this.bio = bio;
         this.image = image;
     }
 
     public String getPassword() {
+        return password;
+    }
+    public String encryptSHA512(String password){
         try {
             // getInstance() method is called with algorithm SHA-512
             MessageDigest md = MessageDigest.getInstance("SHA-512");
@@ -110,6 +118,10 @@ public class User {
         return true;
     }
 
+    public void setCardStack(Stack cardStack) {
+        this.cardStack = cardStack;
+    }
+
     public Card getCardToAttack() {
         Random rand = new Random();
         int randIndex = rand.nextInt(0, this.deck.getDeckSize());
@@ -129,13 +141,22 @@ public class User {
     }
 
     public void setDeck(List<UUID> cardIDs) {
+        Deck temp = new Deck();
+        boolean error = false;
         for (UUID id : cardIDs) {
             Card c = this.cardStack.getCard(id);
             if (c != null) {
-                this.deck.addCard(c);
-                this.cardStack.removeCard(c);
+                temp.addCard(c);
+                //evtl entfernen weils leichter ist nach einem battle die karten zu tauschen
+                //this.cardStack.removeCard(c);
+            }else{
+                System.out.println("The user does not own the card: " + id.toString());
+                return;
             }
-
+        }
+        //if no error happened add cards to real deck
+        if(!error){
+            this.deck = temp;
         }
     }
 
@@ -183,12 +204,13 @@ public class User {
         this.deck.printDeck("plain");
     }
     public void printUserData(){
-        System.out.println("Name: "+ this.username+"\nBio: "+this.bio+"\nImage: "+this.image);
+        System.out.println("Name: "+ this.nickname+"\nBio: "+this.bio+"\nImage: "+this.image);
     }
     public void setUserData(String name, String bio, String image){
         this.nickname=name;
         this.bio=bio;
         this.image=image;
+        PostgresUserRepository.updateUserdata(name,bio,image, this.username);
     }
 
     public int getCoins() {
