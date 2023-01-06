@@ -3,7 +3,6 @@ package org.mtcg.repository;
 import org.mtcg.cards.*;
 import org.mtcg.cards.Package;
 import org.mtcg.config.DBConnector;
-import org.mtcg.config.DataSource;
 import org.mtcg.user.Stack;
 import org.mtcg.user.User;
 
@@ -32,10 +31,16 @@ public class PostgresCardRepository {
                 SET OWNER = ?
                 WHERE ID = ?;
             """;
-    private static final String ADD_CARD = """
-            INSERT INTO CARDS VALUES (?, ?, ? ,?, ?);
+    private final String SET_LOCK = """
+            UPDATE CARDS 
+                SET LOCK = ?
+                WHERE ID = ?;
             """;
-    public static void addPackage(Package p){
+
+    private final String ADD_CARD = """
+            INSERT INTO CARDS VALUES (?, ?, ? ,?, ?, ?);
+            """;
+    public void addPackage(Package p){
         try (Connection c = dataSource.getConnection()) {
             for(Card card : p.getCards()){
                 try (PreparedStatement ps = c.prepareStatement(ADD_CARD)) {
@@ -50,6 +55,7 @@ public class PostgresCardRepository {
                         ps.setString(4,null);
                     }
                     ps.setString(5,null);
+                    ps.setBoolean(6,card.isLock());
                     ps.execute();
                 }
             }
@@ -59,7 +65,7 @@ public class PostgresCardRepository {
         }
     }
     //gets all ownerless cards and adds them to the store
-    public static ArrayList<Package> initializieStore(){
+    public static ArrayList<Package> getAllPackages(){
         ArrayList<Card> allCards = new ArrayList<>();
         try (Connection c = dataSource.getConnection()) {
                 try (PreparedStatement ps = c.prepareStatement(ALL_OWNERLESS_CARDS)) {
@@ -93,18 +99,20 @@ public class PostgresCardRepository {
             return new Spellcard(
                     UUID.fromString(resultSet.getString("id")),
                     resultSet.getFloat("damage"),
-                    Elements.valueOf(resultSet.getString("element"))
+                    Elements.valueOf(resultSet.getString("element")),
+                    resultSet.getBoolean("lock")
             );
         }else{
             return new Monstercard(
                     UUID.fromString(resultSet.getString("id")),
                     resultSet.getFloat("damage"),
                     Elements.valueOf(resultSet.getString("element")),
-                    Monsters.valueOf(stringType)
+                    Monsters.valueOf(stringType),
+                    resultSet.getBoolean("lock")
             );
         }
     }
-    public static Stack getCardsByUsername(User u){
+    public Stack getCardsByUsername(User u){
         Stack s = new Stack();
         try (Connection c = dataSource.getConnection()) {
 
@@ -121,13 +129,34 @@ public class PostgresCardRepository {
         }
         return s;
     }
-    public static void addOWNER(Package p, User u){
+    public void setLock(Boolean lock, String id){
+        try (Connection c = dataSource.getConnection()) {
+            try (PreparedStatement ps = c.prepareStatement(SET_LOCK)) {
+                ps.setBoolean(1, lock);
+                ps.setString(2, id);
+                ps.execute();
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("DB query failed", e);
+        }
+    }
+    public void setOwner(Card card, User u){
+        try (Connection c = dataSource.getConnection()) {
+            try (PreparedStatement ps = c.prepareStatement(ADD_OWNER)) {
+                ps.setString(1, u.getUsername());
+                ps.setString(2, card.getId().toString());
+                ps.execute();
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("DB query failed", e);
+        }
+    }
+    public static void addOwnerToPackage(Package p, User u){
         try (Connection c = dataSource.getConnection()) {
             for(Card card : p.getCards()){
                 try (PreparedStatement ps = c.prepareStatement(ADD_OWNER)) {
                     ps.setString(1, u.getUsername());
                     ps.setString(2, card.getId().toString());
-
                     ps.execute();
                 }
             }
@@ -136,13 +165,14 @@ public class PostgresCardRepository {
             throw new IllegalStateException("DB query failed", e);
         }
     }
-    private static final String SETUP_TABLE = """
+    private final String SETUP_TABLE = """
                 CREATE TABLE IF NOT EXISTS cards(
                     id varchar(500)primary key,
                     element varchar(500),
                     damage float,
                     type varchar(500),
                     owner varchar(500),
+                    lock BOOL,
                     CONSTRAINT fk_user
                           FOREIGN KEY(owner)
                     	  REFERENCES users(username)
@@ -152,7 +182,7 @@ public class PostgresCardRepository {
     private static final String ALL_OWNERLESS_CARDS = """
                 SELECT * FROM CARDS WHERE OWNER IS NULL;
             """;
-    private static final String GET_CARDS_BY_USERNAME = """
+    private final String GET_CARDS_BY_USERNAME = """
                 SELECT * FROM CARDS WHERE OWNER = ?;   
             """;
 }

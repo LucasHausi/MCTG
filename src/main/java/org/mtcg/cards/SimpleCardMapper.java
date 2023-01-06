@@ -47,9 +47,9 @@ public class SimpleCardMapper {
             UUID id = sc.getId();
             float damage = sc.getDamage();
             if(monsterType == null){
-                tempCards.add(new Spellcard(id, damage , element));
+                tempCards.add(new Spellcard(id, damage , element, false));
             }else{
-                tempCards.add(new Monstercard(id, damage , element, monsterType));
+                tempCards.add(new Monstercard(id, damage , element, monsterType, false));
             }
         }
         p.setCards(tempCards);

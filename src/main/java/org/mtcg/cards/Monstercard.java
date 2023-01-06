@@ -38,8 +38,8 @@ public class Monstercard extends Card{
     }
 
     //Constructor when a admin creates Cards
-    public Monstercard(UUID id, float damage, Elements element, Monsters type){
-        super(id, damage, element);
+    public Monstercard(UUID id, float damage, Elements element, Monsters type, boolean lock){
+        super(id, damage, element, lock);
         this.type = type;
     }
     public String toString() {

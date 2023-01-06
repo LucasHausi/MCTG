@@ -8,7 +8,7 @@ public class Deck {
     private ArrayList<Card> cards;
 
     public Deck() {
-        this.cards = new ArrayList<Card>();
+        this.cards = new ArrayList<>();
     }
 
     public void addCard(Card c)
@@ -31,6 +31,9 @@ public class Deck {
             return true;
         }
         return false;
+    }
+    public boolean isEmpty(){
+        return this.cards.isEmpty();
     }
     public void printDeck(String format){
         if(this.cards.isEmpty()){

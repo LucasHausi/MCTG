@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.mtcg.cards.Card;
 import org.mtcg.cards.Package;
+import org.mtcg.game.TradingDeal;
 import org.mtcg.repository.PostgresUserRepository;
 
 import java.math.BigInteger;
@@ -20,21 +21,24 @@ public class User {
     private String nickname;
     private String bio;
     private String image;
+    private int elo;
 
     @JsonCreator
     public User(@JsonProperty("Username") String username, @JsonProperty("Password") String password) {
         this.username = username;
         this.password = encryptSHA512(password);
         this.coins = 20;
+        this.elo = 100;
         this.cardStack = new Stack();
         this.deck = new Deck();
+
         //this.chooseDeck();
     }
-
-    public User(String username, String password, int coins, String nickname, String bio, String image) {
+    public User(String username, String password, int coins, String nickname, String bio, String image, int elo) {
         this.username = username;
         this.password = password;
         this.coins = coins;
+        this.elo = elo;
         this.deck = new Deck();
         this.cardStack = new Stack();
         if(nickname==null){
@@ -45,7 +49,6 @@ public class User {
         this.bio = bio;
         this.image = image;
     }
-
     public String getPassword() {
         return password;
     }
@@ -80,7 +83,6 @@ public class User {
         int[] cardIndexes = Arrays.stream(splitInput).mapToInt(Integer::parseInt).toArray();
         this.copyCardsToDeck(cardIndexes);
     }
-
     boolean assertInput(String input) {
         String[] splitInput = input.split("\\s");
 
@@ -117,29 +119,47 @@ public class User {
         }
         return true;
     }
-
     public void setCardStack(Stack cardStack) {
         this.cardStack = cardStack;
     }
-
     public Card getCardToAttack() {
         Random rand = new Random();
         int randIndex = rand.nextInt(0, this.deck.getDeckSize());
         return this.deck.getCard(randIndex);
     }
-
-    public boolean removeCard(Card c) {
+    public boolean removeCardFromDeck(Card c) {
         return this.deck.removeCard(c);
     }
-
+    public void removeCardFromStack(Card c){
+        this.cardStack.removeCard(c);
+    }
+    public void addCardToStack(Card c){
+        this.cardStack.addCard(c);
+    }
+    public Card getCardFromStack(String strCardID){
+        return this.cardStack.getCard(UUID.fromString(strCardID));
+    }
     public void addCardToDeck(Card c) {
         this.deck.addCard(c);
     }
-
     public String getUsername() {
         return username;
     }
-
+    public void printStats(){
+        System.out.println("The elo of "+this.nickname+" is: "+this.elo);
+    }
+    public boolean lockCard(String strCardID){
+       return this.cardStack.lockCard(strCardID);
+    }
+    public int getElo() {
+        return elo;
+    }
+    public void win(){
+        this.elo+=3;
+    }
+    public void loose(){
+        this.elo-=5;
+    }
     public void setDeck(List<UUID> cardIDs) {
         Deck temp = new Deck();
         boolean error = false;
@@ -159,7 +179,6 @@ public class User {
             this.deck = temp;
         }
     }
-
     public void acquirePackage(Package p) {
         boolean errWhenAddingCards = false;
         //variable to store the amount of successful purchased cards
@@ -181,7 +200,6 @@ public class User {
         }
         this.coins -= succBought;
     }
-
     public boolean hasEnoughMoney() {
         if (this.coins >= 5) {
             return true;
@@ -189,12 +207,9 @@ public class User {
             return false;
         }
     }
-
-    //simplify this methods call somehow??
     public void printStack() {
         this.cardStack.printStack();
     }
-
     public void printDeck() {
         System.out.println("This is " + username + "'s deck: ");
         this.deck.printDeck("normal");
@@ -211,6 +226,9 @@ public class User {
         this.bio=bio;
         this.image=image;
         PostgresUserRepository.updateUserdata(name,bio,image, this.username);
+    }
+    public boolean deckEmpty(){
+        return deck.isEmpty();
     }
 
     public int getCoins() {

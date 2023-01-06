@@ -4,8 +4,10 @@ import java.util.UUID;
 
 public abstract class Card implements Attackable {
     protected final float damage;
+
     protected final UUID id;
     protected Elements element;
+    protected boolean lock;
 
     public Card(float damage, int element) {
         this.id = UUID.randomUUID();
@@ -22,14 +24,24 @@ public abstract class Card implements Attackable {
         }
     }
     //Constructor when an admin creates Cards
-    public Card(UUID id, float damage, Elements element){
+    public Card(UUID id, float damage, Elements element, boolean lock){
         this.id = id;
         this.damage = damage;
         this.element = element;
+        this.lock = lock;
     }
     public float getDamage() {
         return damage;
     }
+
+    public boolean isLock() {
+        return lock;
+    }
+
+    public void lock() {
+        this.lock = true;
+    }
+    public void unlock(){this.lock = false;};
 
     public Elements getElement() {
         return element;
@@ -88,7 +100,9 @@ public abstract class Card implements Attackable {
             return false;
         }
     }
-
+    public boolean isMonster(){
+        return this instanceof Monstercard;
+    }
     private boolean checkSpecialMonsterCases(Card opponent) {
         /* Cases to consider for no Attack:
         Goblin -> Dragon

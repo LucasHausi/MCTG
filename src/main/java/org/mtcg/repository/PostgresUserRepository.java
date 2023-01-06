@@ -1,6 +1,7 @@
 package org.mtcg.repository;
 
 import org.mtcg.config.DBConnector;
+import org.mtcg.config.DataSource;
 import org.mtcg.user.User;
 
 import java.sql.Connection;
@@ -14,6 +15,7 @@ public class PostgresUserRepository implements UserRepository{
 
     private static DBConnector dataSource;
 
+    //depracated ----
     public PostgresUserRepository(DBConnector dataSource){
         this.dataSource = dataSource;
         try (PreparedStatement ps = dataSource.getConnection()
@@ -30,7 +32,8 @@ public class PostgresUserRepository implements UserRepository{
                     coins int,
                     nickname varchar(500),
                     bio varchar(500),
-                    image varchar(500)
+                    image varchar(500),
+                    elo int
                 );
             """;
 
@@ -39,7 +42,7 @@ public class PostgresUserRepository implements UserRepository{
         """;
 
     private static final String ADD_USER = """
-            INSERT INTO users (username, password, coins, nickname, bio, image) VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO users (username, password, coins, nickname, bio, image, elo) VALUES (?, ?, ?, ?, ?, ?, ?)
             """;
 
     private static final String ALL_USERS = """
@@ -66,7 +69,7 @@ public class PostgresUserRepository implements UserRepository{
             throw new IllegalStateException("DB query failed", e);
         }
     }
-    public static void addUser(User u){
+    public void addUser(User u){
         try (Connection c = dataSource.getConnection()) {
             try (PreparedStatement ps = c.prepareStatement(ADD_USER)) {
                 ps.setString(1, u.getUsername());
@@ -75,13 +78,14 @@ public class PostgresUserRepository implements UserRepository{
                 ps.setString(4, u.getNickname());
                 ps.setString(5, u.getBio());
                 ps.setString(6, u.getImage());
+                ps.setInt(7, u.getElo());
                 ps.execute();
             }
         } catch (SQLException e) {
             throw new IllegalStateException("DB query failed", e);
         }
     }
-    public List<User> getAllUsers(){
+    public static List<User> getAllUsers(){
         List<User> users = new ArrayList<>();
         try (Connection c = dataSource.getConnection()) {
             try (PreparedStatement ps = c.prepareStatement(ALL_USERS)) {
@@ -96,14 +100,15 @@ public class PostgresUserRepository implements UserRepository{
         }
         return users;
     };
-    private User convertResultSetToUser(ResultSet resultSet)  throws SQLException {
+    private static User convertResultSetToUser(ResultSet resultSet)  throws SQLException {
         return new User(
                 resultSet.getString(1),
                 resultSet.getString(2),
                 resultSet.getInt(3),
                 resultSet.getString(4),
                 resultSet.getString(5),
-                resultSet.getString(6));
+                resultSet.getString(6),
+                resultSet.getInt(7));
     }
     @Override
     public User getUserByUsername(String username) {
@@ -121,8 +126,8 @@ public class PostgresUserRepository implements UserRepository{
                             resultSet.getInt("coins"),
                             resultSet.getString("nickname"),
                             resultSet.getString("bio"),
-                            resultSet.getString("image")
-                    );
+                            resultSet.getString("image"),
+                            resultSet.getInt("image"));
                 }
 
             }

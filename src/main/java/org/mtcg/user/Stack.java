@@ -66,6 +66,16 @@ public class Stack {
     {
         return this.cards.get(index);
     }
+    public boolean lockCard(String strCardID){
+        UUID id = UUID.fromString(strCardID);
+        Card c = getCard(id);
+        if(c != null){
+            c.lock();
+            return true;
+        }else{
+            return false;
+        }
+    }
 
     public  Card getCard(UUID id){
         return this.cards.stream()

@@ -5,14 +5,11 @@ import org.mtcg.user.User;
 
 import java.util.concurrent.TimeUnit;
 
-import static java.lang.System.exit;
-
 public class Game {
 
-    public void startGame(User player1, User player2)
+    public synchronized void startGame(User player1, User player2)
     {
         //printIntro();
-
         for(int i=1; i <= 100;i++)
         {
             System.out.println(("Round "+i));
@@ -25,17 +22,19 @@ public class Game {
                 winner = c1.attack(c2);
             }
             else{
-                System.out.println(player2.getUsername()+" attacks"+player1.getUsername());
+                System.out.println(player2.getUsername()+" attacks "+player1.getUsername());
                 winner = c2.attack(c1);
             }
 
             if(c1 == winner)
             {
                 System.out.println(c1+" defeats "+c2);
-                if(!player2.removeCard(c2))
+                if(!player2.removeCardFromDeck(c2))
                 {
                     System.out.println(player1.getUsername().concat(" wins the game!"));
-                    exit(0);
+                    player1.win();
+                    player2.loose();
+                    return;
                 }
                 else {
                     player1.addCardToDeck(c2);
@@ -43,10 +42,12 @@ public class Game {
             }
             else{
                 System.out.println(c2+" defeats "+c1);
-                if(!player1.removeCard(c1))
+                if(!player1.removeCardFromDeck(c1))
                 {
                     System.out.println(player2.getUsername().concat(" wins the game!"));
-                    exit(0);
+                    player2.win();
+                    player1.loose();
+                    return;
                 }
                 else {
                     player2.addCardToDeck(c1);
@@ -59,6 +60,7 @@ public class Game {
             //check if both decks are >= 0
             //end game or start next round
         }
+        System.out.println("It's a draw!");
     }
 
     void printIntro()

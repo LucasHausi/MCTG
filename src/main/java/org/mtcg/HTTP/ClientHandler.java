@@ -8,36 +8,34 @@ import org.json.JSONObject;
 import org.mtcg.cards.Package;
 import org.mtcg.cards.SimpleCard;
 import org.mtcg.cards.SimpleCardMapper;
-import org.mtcg.controller.StoreController;
 import org.mtcg.game.Game;
-import org.mtcg.repository.InMemoryUserRepository;
-import org.mtcg.repository.PostgresCardRepository;
-import org.mtcg.repository.PostgresUserRepository;
+import org.mtcg.game.Requirement;
+import org.mtcg.game.TradingDeal;
+import org.mtcg.service.CardService;
+import org.mtcg.service.UserService;
 import org.mtcg.user.User;
+
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Exchanger;
 
-public class ClientHandler implements Runnable{
+import static java.lang.Thread.currentThread;
+
+public class ClientHandler implements Runnable {
     private final Socket clientSocket;
-    private final InMemoryUserRepository userRepository;
-    private final StoreController storeController;
-    private final PostgresUserRepository postgresUserRepository;
-    private final PostgresCardRepository postgresCardRepository;
-    private final BlockingQueue blockingQueue;
+    private final BlockingQueue<User> blockingQueue;
+    private final UserService userService;
+    private final CardService cardService;
 
-    public ClientHandler(Socket clientSocket, InMemoryUserRepository userRepository,
-                         PostgresUserRepository postgresUserRepository, PostgresCardRepository postgresCardRepository,
-                         StoreController storeController, BlockingQueue blockingQueue) {
+    public ClientHandler(Socket clientSocket, BlockingQueue blockingQueue, UserService userService, CardService cardService) {
         this.clientSocket = clientSocket;
-        this.storeController = storeController;
-        this.userRepository = userRepository;
-        this.postgresCardRepository = postgresCardRepository;
         this.blockingQueue = blockingQueue;
-        this.postgresUserRepository = postgresUserRepository;
+        this.userService = userService;
+        this.cardService = cardService;
     }
 
     @Override
@@ -110,138 +108,99 @@ public class ClientHandler implements Runnable{
         switch (path) {
             case ("/users"):
                 u1 = new ObjectMapper().readValue(rc.getBody(), User.class);
-                u2 = userRepository.getUserByUsername(u1.getUsername());
-                if (u2 == null) {
-                    userRepository.addUser(u1);
-                    postgresUserRepository.addUser(u1);
-                    System.out.println("The user "+
-                                       u1.getUsername()+" was created");
-                } else {
-                    System.out.println("This user does already exist!");
-                }
+                userService.addUser(u1);
                 break;
             case ("/sessions"):
                 u1 = new ObjectMapper().readValue(rc.getBody(), User.class);
-                u2 = userRepository.getUserByUsername(u1.getUsername());
-                if (u2 == null) {
-                    System.out.println("This user does not exist");
-                } else {
-                    if (u2.getPassword().equals(u1.getPassword())) {
-                        System.out.println("Login was successful");
-                        userRepository.addAuthToken(u2);
-                    } else {
-                        System.out.println("Wrong password");
-                        System.out.println(u1.getPassword());
-                        System.out.println(u2.getPassword());
-                    }
-                }
-                userRepository.printIMUserRepository();
+                userService.loginUser(u1);
                 break;
             case ("/packages"):
                 //create Packages (done by an admin)
-                //check if the Auth Token is valid
-                ObjectMapper mapper = new ObjectMapper();
-                SimpleCard[] simpleCards = mapper.readValue(rc.getBody(), SimpleCard[].class);
-                SimpleCardMapper scm = new SimpleCardMapper();
-                Package p = scm.mapSimpleCardsToCards(simpleCards);
-                //p.print();
-                storeController.store.addPackage(p);
-                PostgresCardRepository.addPackage(p);
-
+                // check if the Auth Token is valid
+                if ((sentToken = rc.getAuthToken()) != null) {
+                    if (userService.checkAdminToken(sentToken)) {
+                        ObjectMapper mapper = new ObjectMapper();
+                        SimpleCard[] simpleCards = mapper.readValue(rc.getBody(), SimpleCard[].class);
+                        SimpleCardMapper scm = new SimpleCardMapper();
+                        Package p = scm.mapSimpleCardsToCards(simpleCards);
+                        cardService.addPackage(p);
+                    } else {
+                        System.out.println("The admin token is wrong!");
+                    }
+                } else {
+                    System.out.println("No authentication token");
+                }
                 break;
             case ("/transactions/packages"):
                 //acquire Packages
                 //check if the Auth Token is valid
-                if ((sentToken = rc.getAuthToken()) != null) {
-                    if (userRepository.checkAuthToken(sentToken)) {
-                        u1 = userRepository.getUserByAuthToken(sentToken);
-                        storeController.sellPackage(u1);
-                    } else {
-                        System.out.println("Wrong authentication token");
-                    }
-                } else {
-                    System.out.println("No authentication token");
+                u1 = userService.authenticateUser(rc.getAuthToken());
+                if (u1 != null) {
+                    cardService.sellPackage(u1);
                 }
                 break;
             case ("/cards"):
                 //show all cards in the users stack
                 //check if the Auth Token is valid
-                if ((sentToken = rc.getAuthToken()) != null) {
-                    if (userRepository.checkAuthToken(sentToken)) {
-                        u1 = userRepository.getUserByAuthToken(sentToken);
-                        u1.printStack();
-                    } else {
-                        System.out.println("Wrong authentication Token");
-                    }
-                } else {
-                    System.out.println("No authentication token");
+                u1 = userService.authenticateUser(rc.getAuthToken());
+                if (u1 != null) {
+                    u1.printStack();
                 }
                 break;
             case ("/deck"):
                 //show all cards in the users stack
                 //check if the Auth Token is valid
-                if ((sentToken = rc.getAuthToken()) != null) {
-                    if (userRepository.checkAuthToken(sentToken)) {
-                        u1 = userRepository.getUserByAuthToken(sentToken);
-                        switch (rc.getHttpVerb()) {
-                            case ("GET"):
-                                //print the unconfigured deck
+                u1 = userService.authenticateUser(rc.getAuthToken());
+                if (u1 != null) {
+                    switch (rc.getHttpVerb()) {
+                        case ("GET"):
+                            //print the unconfigured deck
+                            u1.printDeck();
+                            break;
+                        case ("PUT"):
+                            //configureDeck
+                            //List with Card UUIDs
+                            List<UUID> cardIDs = new ArrayList<>();
+                            try {
+                                JSONArray jsonArr = new JSONArray(rc.getBody());
+                                for (int i = 0; i < jsonArr.length(); i++) {
+                                    cardIDs.add(UUID.fromString(jsonArr.get(i).toString()));
+                                }
+                            } catch (JSONException e) {
+                                System.err.println(e);
+                            }
+                            if (cardIDs.size() == 4) {
+                                u1.setDeck(cardIDs);
                                 u1.printDeck();
-                                break;
-                            case ("PUT"):
-                                //configureDeck
-                                //List with Card UUIDs
-                                List<UUID> cardIDs = new ArrayList<>();
-                                try {
-                                    JSONArray jsonArr = new JSONArray(rc.getBody());
-                                    for (int i = 0; i < jsonArr.length(); i++) {
-                                        cardIDs.add(UUID.fromString(jsonArr.get(i).toString()));
-                                    }
-                                } catch (JSONException e) {
-                                    System.err.println(e);
-                                }
-                                if (cardIDs.size() == 4) {
-                                    u1.setDeck(cardIDs);
-                                    u1.printDeck();
-                                } else {
-                                    System.out.println("You need to provide 4 Cards to set your Deck - You have chosen: " + cardIDs.size());
-                                }
-                                break;
-                        }
-                    } else {
-                        System.out.println("Wrong authentication Token");
+                            } else {
+                                System.out.println("You need to provide 4 Cards to set your Deck - You have chosen: " + cardIDs.size());
+                            }
+                            break;
                     }
-                } else {
-                    System.out.println("No authentication token");
                 }
                 break;
             case ("/deck?format=plain"):
                 //show all cards in the users stack
                 //check if the Auth Token is valid
-                if ((sentToken = rc.getAuthToken()) != null) {
-                    if (userRepository.checkAuthToken(sentToken)) {
-                        u1 = userRepository.getUserByAuthToken(sentToken);
-                        u1.printDeckPlain();
-                    } else {
-                        System.out.println("Wrong authentication Token");
-                    }
-                } else {
-                    System.out.println("No authentication token");
+                u1 = userService.authenticateUser(rc.getAuthToken());
+                if (u1 != null) {
+                    u1.printDeckPlain();
                 }
                 break;
-            case("/battles"):
+            case ("/battles"):
                 try {
-                    if ((sentToken = rc.getAuthToken()) != null) {
-                        if (userRepository.checkAuthToken(sentToken)) {
-                            u1 = userRepository.getUserByAuthToken(sentToken);
-                            blockingQueue.add(u1);
+                    User winner = null;
+                    u1 = userService.authenticateUser(rc.getAuthToken());
+                    if (u1 != null) {
+                        if (u1.deckEmpty()) {
+                            System.out.println(u1.getUsername() + "'s deck is not configured");
+                        } else if (blockingQueue.contains(u1)) {
+                            System.out.println("You cant play against yourself!");
                         } else {
-                            System.out.println("Wrong authentication Token");
+                            blockingQueue.add(u1);
                         }
-                    } else {
-                        System.out.println("No authentication token");
                     }
-                    if(blockingQueue.stream().count()>=2){
+                    if (blockingQueue.size() >= 2) {
                         User tempUser1 = (User) blockingQueue.take();
                         User tempUser2 = (User) blockingQueue.take();
                         Game round = new Game();
@@ -251,50 +210,89 @@ public class ClientHandler implements Runnable{
                     throw new RuntimeException(e);
                 }
                 break;
+            case ("/tradings"):
+                u1 = userService.authenticateUser(rc.getAuthToken());
+                if (u1 != null) {
+                    switch (rc.getHttpVerb()) {
+                        case ("GET"):
+                            cardService.checkTradingDeals();
+                            break;
+                        case ("POST"):
+                            try {
+                                JSONObject jsonObject = new JSONObject(rc.getBody());
+                                TradingDeal td = new TradingDeal(   UUID.fromString(jsonObject.getString("Id")),
+                                                                    jsonObject.getString("CardToTrade"),
+                                                                    u1,
+                                                                    new Requirement(jsonObject.getString("Type"),
+                                                                            (float) jsonObject.getDouble("MinimumDamage"))
+                                );
+                                cardService.addTradingDeal(td);
+                            } catch (JSONException e) {
+                                System.err.println(e);
+                            }
+                            break;
+                    }
+                }
+                break;
+            case ("/stats"):
+                u1 = userService.authenticateUser(rc.getAuthToken());
+                if (u1 != null) {
+                    u1.printStats();
+                }
+                break;
+            case ("/score"):
+                userService.scoreBoard();
+                break;
             default:
                 if (path.contains("/users/")) {
                     String username = path.replace("/users/", "");
-                    u1 = userRepository.getUserByUsername(username);
+                    u1 = userService.getUserByUsername(username);
                     if (u1 != null) {
-                        if ((sentToken = rc.getAuthToken()) != null) {
-                            if (userRepository.checkAuthToken(sentToken)) {
-                                u2 = userRepository.getUserByAuthToken(sentToken);
-                                if(u1!=u2){
-                                    System.out.println("The username and the auth. token do not match!");
-                                    break;
-                                }
-                                switch (rc.getHttpVerb()) {
-                                    case ("GET"):
-                                        u1.printUserData();
-                                        break;
-                                    case ("PUT"):
-                                        try {
-                                            JSONObject jsonObject = new JSONObject(rc.getBody());
-                                            u1.setUserData(jsonObject.getString("Name"),jsonObject.getString("Bio"),jsonObject.getString("Image"));
-
-                                        } catch (JSONException e) {
-                                            System.err.println(e);
-                                        }
-                                        break;
-                                }
-                            } else {
-                                System.out.println("Wrong authentication Token");
+                        u2 = userService.authenticateUser(rc.getAuthToken());
+                        if (u2 != null) {
+                            if (u1 != u2) {
+                                System.out.println("The username and the auth. token do not match!");
+                                break;
                             }
-                        } else {
-                            System.out.println("No authentication token");
+                            switch (rc.getHttpVerb()) {
+                                case ("GET"):
+                                    u1.printUserData();
+                                    break;
+                                case ("PUT"):
+                                    try {
+                                        JSONObject jsonObject = new JSONObject(rc.getBody());
+                                        u1.setUserData(jsonObject.getString("Name"), jsonObject.getString("Bio"), jsonObject.getString("Image"));
+                                    } catch (JSONException e) {
+                                        System.err.println(e);
+                                    }
+                                    break;
+                            }
                         }
                     } else {
                         System.out.println("The user does not exist!");
                     }
-
+                //path to trade cards
+                } else if (path.contains("/tradings/")) {
+                    String strTradeID = path.replace("/tradings/", "");
+                    u1 = userService.authenticateUser(rc.getAuthToken());
+                    if (u1 != null) {
+                        switch (rc.getHttpVerb()) {
+                            case ("DELETE"):
+                                cardService.deleteTradingDeal(UUID.fromString(strTradeID));
+                                break;
+                            case ("POST"):
+                                String offeredCard = rc.getBody();
+                                offeredCard = offeredCard.replaceAll("\"", "");
+                                cardService.tryToTradeCard(UUID.fromString(strTradeID), offeredCard, u1);
+                                break;
+                        }
+                    }
                 } else {
                     System.out.println("No route found!" + rc.getPath());
                 }
+                //set to null for garbage collector
+                u1 = null;
+                u2 = null;
         }
-        //set to null for garbage collector
-        u1 = null;
-        u2 = null;
     }
-
-
 }

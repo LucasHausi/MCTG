@@ -9,8 +9,8 @@ public class Spellcard extends Card {
     }
 
     //Constructor when a admin creates Cards
-    public Spellcard(UUID id, float damage, Elements element) {
-        super(id, damage, element);
+    public Spellcard(UUID id, float damage, Elements element, boolean lock) {
+        super(id, damage, element,lock);
     }
 
     public String toString() {
