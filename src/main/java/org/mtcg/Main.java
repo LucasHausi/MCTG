@@ -11,12 +11,5 @@ public class Main {
 
         HttpServer server = new HttpServer();
         server.start();
-        /*PostgresUserRepository postgressUserRepository = new PostgresUserRepository(DataSource.getInstance());
-        User u = postgressUserRepository.getUserByUsername("a");
-        u.printUserData();
-        postgressUserRepository.PRINT_ALL_USERS();*/
-
-        //Game round = new Game();
-        //round.startGame();
     }
 }

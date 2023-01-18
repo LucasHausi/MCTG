@@ -29,10 +29,11 @@ public class Store {
 
     public Package getRandPackage() {
         //threadsafe version to get a rand number
-        int randomElementIndex = ThreadLocalRandom.current().nextInt(this.packages.size());
+        /*int randomElementIndex = ThreadLocalRandom.current().nextInt(this.packages.size());
         Package p = this.packages.get(randomElementIndex);
-        this.packages.remove(p);
-        return p;
+        this.packages.remove(p);*/
+        //new version because of integration test
+        return this.packages.remove(0);
     }
 
     public void printTradingDeals() {

@@ -3,6 +3,7 @@ package org.mtcg.user;
 import org.mtcg.cards.Card;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 public class Deck {
     private ArrayList<Card> cards;
@@ -16,8 +17,13 @@ public class Deck {
         this.cards.add(c);
     }
 
-    public Card getCard(int index){
-        return this.cards.get(index);
+    public Card getCardToAttack(){
+        Random rand = new Random();
+        int randIndex = rand.nextInt(0, this.cards.size());
+        return this.cards.get(randIndex);
+    }
+    public boolean removeCardFromDeck(Card c) {
+        return this.removeCard(c);
     }
     public int getDeckSize()
     {
@@ -31,6 +37,9 @@ public class Deck {
             return true;
         }
         return false;
+    }
+    public void clearDeck(){
+        this.cards.clear();
     }
     public boolean isEmpty(){
         return this.cards.isEmpty();

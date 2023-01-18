@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.mtcg.cards.Card;
 import org.mtcg.cards.Package;
-import org.mtcg.game.TradingDeal;
 import org.mtcg.repository.PostgresUserRepository;
 
 import java.math.BigInteger;
@@ -123,9 +122,10 @@ public class User {
         this.cardStack = cardStack;
     }
     public Card getCardToAttack() {
-        Random rand = new Random();
-        int randIndex = rand.nextInt(0, this.deck.getDeckSize());
-        return this.deck.getCard(randIndex);
+        return this.deck.getCardToAttack();
+    }
+    public Deck getDeck(){
+        return deck;
     }
     public boolean removeCardFromDeck(Card c) {
         return this.deck.removeCard(c);
@@ -167,8 +167,6 @@ public class User {
             Card c = this.cardStack.getCard(id);
             if (c != null) {
                 temp.addCard(c);
-                //evtl entfernen weils leichter ist nach einem battle die karten zu tauschen
-                //this.cardStack.removeCard(c);
             }else{
                 System.out.println("The user does not own the card: " + id.toString());
                 return;
@@ -178,6 +176,9 @@ public class User {
         if(!error){
             this.deck = temp;
         }
+    }
+    public void clearDeck(){
+        this.deck.clearDeck();
     }
     public void acquirePackage(Package p) {
         boolean errWhenAddingCards = false;

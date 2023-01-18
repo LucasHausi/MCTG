@@ -92,12 +92,15 @@ public abstract class Card implements Attackable {
         }
         return Effectiveness.no_effect;
     }
-    boolean winsBattle(float selfDamage, float opponentDamage){
+    //0->self wins, 1->draw , 2->opponent wins
+    int winsBattle(float selfDamage, float opponentDamage){
         if(selfDamage > opponentDamage){
-            return true;
+            return 0;
         }
-        else{
-            return false;
+        else if (selfDamage == opponentDamage){
+            return 1;
+        }else {
+            return 2;
         }
     }
     public boolean isMonster(){
@@ -133,6 +136,35 @@ public abstract class Card implements Attackable {
         }
         return true;
     }
+    // return Values 0 -> abbort attack, 1->instant death for opponent, 3-> instant death for self, 2->normal attack
+    private int checkSpecialSpellCases(Card opponent){
+        Monstercard tempMonster;
+        Spellcard tempSpell;
+        if(this.isMonster()){
+            tempMonster = (Monstercard) this;
+            tempSpell = (Spellcard) opponent;
+
+        }else if(opponent.isMonster()){
+            tempMonster = (Monstercard) opponent;
+            tempSpell = (Spellcard) this;
+        }else{
+            return 2;
+        }
+        //only two cases important here
+        if(tempMonster.getType() == Monsters.Kraken){
+            System.out.println("A Kranken is immune against spells");
+            return 0;
+        } else if (tempMonster.getType()==Monsters.Knight && tempSpell.getElement()==Elements.Water) {
+            System.out.println("The Knight drowns instantly");
+            if(this == tempMonster){
+                return 3;
+            }else{
+                return 1;
+            }
+
+        }
+        return 2;
+    }
     public abstract String toPlainString();
     public abstract String toFancyString();
     //could you use an override annotation here?
@@ -140,7 +172,7 @@ public abstract class Card implements Attackable {
         //three cases pure monster fight, pure spell fight, mixed fight
         boolean selfIsMonster = this instanceof Monstercard;
         boolean opponentIsMonster = opponent instanceof Monstercard;
-        boolean wins;
+        int wins;
 
         System.out.print(this.toString().concat(" ("));
         System.out.print(this.damage+" Damage) vs "+ opponent.toString()+" ("+ opponent.damage+" Damage) => ");
@@ -153,31 +185,43 @@ public abstract class Card implements Attackable {
                 wins = winsBattle(this.damage, opponent.damage);
             }
             else {
-                return opponent;
+                return null;
             }
         }
         // pure Spellfights and mixed fights
         else {
-            Effectiveness e = this.calcElementFactor(opponent);
-            System.out.print(this.damage+" VS "+opponent.damage+" -> ");
-            switch (e){
-                case effective:
-                    wins = winsBattle(this.damage*2, (opponent.damage/2));
-                    System.out.print(this.damage*2+" VS "+ opponent.damage/2+" => ");
-                    break;
-                case not_effective:
-                    wins = winsBattle(this.damage/2, (opponent.damage*2));
-                    System.out.print(this.damage/2+" VS "+ opponent.damage*2+" => ");
-                    break;
-                default:
-                    wins = winsBattle(this.damage, opponent.damage);
+                int caseResult = this.checkSpecialSpellCases(opponent);
+                if(caseResult == 2){
+                Effectiveness e = this.calcElementFactor(opponent);
+                System.out.print(this.damage+" VS "+opponent.damage+" -> ");
+                switch (e){
+                    case effective:
+                        wins = winsBattle(this.damage*2, (opponent.damage/2));
+                        System.out.print(this.damage*2+" VS "+ opponent.damage/2+" => ");
+                        break;
+                    case not_effective:
+                        wins = winsBattle(this.damage/2, (opponent.damage*2));
+                        System.out.print(this.damage/2+" VS "+ opponent.damage*2+" => ");
+                        break;
+                    default:
+                        wins = winsBattle(this.damage, opponent.damage);
                 }
+                }else if(caseResult==1){
+                    wins = 0;
+                } else if (caseResult==3) {
+                    wins = 2;
+                } else{
+                    return null;
+                }
+
             }
-        if(wins){
-            return this;
-        }
-        else {
-            return opponent;
+        switch (wins){
+            case 0:
+                return this;
+            case 2:
+                return opponent;
+            default:
+                return null;
         }
     }
 }

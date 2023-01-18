@@ -1,6 +1,7 @@
 package org.mtcg.HTTP;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -8,32 +9,33 @@ import org.json.JSONObject;
 import org.mtcg.cards.Package;
 import org.mtcg.cards.SimpleCard;
 import org.mtcg.cards.SimpleCardMapper;
-import org.mtcg.game.Game;
 import org.mtcg.game.Requirement;
 import org.mtcg.game.TradingDeal;
 import org.mtcg.service.CardService;
 import org.mtcg.service.UserService;
 import org.mtcg.user.User;
+import org.mtcg.util.Pair;
 
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Exchanger;
-
-import static java.lang.Thread.currentThread;
 
 public class ClientHandler implements Runnable {
     private final Socket clientSocket;
-    private final BlockingQueue<User> blockingQueue;
+    private final BlockingQueue<User> bQPlayers;
+    private final BlockingQueue<Pair<User,User>> bqGameResults;
     private final UserService userService;
     private final CardService cardService;
 
-    public ClientHandler(Socket clientSocket, BlockingQueue blockingQueue, UserService userService, CardService cardService) {
+    public ClientHandler(Socket clientSocket, BlockingQueue bQPlayers,BlockingQueue<Pair<User,User>> bqGameResults,
+                         UserService userService, CardService cardService) {
         this.clientSocket = clientSocket;
-        this.blockingQueue = blockingQueue;
+        this.bQPlayers = bQPlayers;
+        this.bqGameResults = bqGameResults;
         this.userService = userService;
         this.cardService = cardService;
     }
@@ -42,33 +44,32 @@ public class ClientHandler implements Runnable {
     public void run() {
         BufferedReader bufferedReader = null;
         final RequestContext requestContext;
-        BufferedWriter bufferedWriter = null;
         try {
             bufferedReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
             requestContext = parseInput(bufferedReader);
             //do something with the request context e.g. login, start game usw
             processRequest(requestContext);
-
-            bufferedWriter = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-            sendResponse(bufferedWriter, HttpStatus.OK);
             clientSocket.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void sendResponse(BufferedWriter bw, HttpStatus status) throws IOException {
-        switch (status) {
-            case OK -> bw.write("HTTP/1.1 200 OK");
-            case CREATED -> bw.write("HTTP/1.1 201 Created");
-            case NO_CONTENT -> bw.write("HTTP/1.1 204 No Content");
-            case BAD_REQUEST -> bw.write("HTTP/1.1 400 Bad Request");
-            case UNAUTHORIZED -> bw.write("HTTP/1.1 401 Unauthorized");
-            case FORBIDDEN -> bw.write("HTTP/1.1 403 Forbidden");
-            case INTERNAL_SERVER_ERROR -> bw.write("HTTP/1.1 500 Internal Server Error");
+    public void sendResponse(Response response) {
+        BufferedWriter bw = null;
+        try {
+            bw = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
+            bw.write("HTTP/1.1 ");
+            bw.write(response.getHttpStatus().getStatusCode() + " ");
+            bw.write(response.getHttpStatus().getStatusMessage());
+            bw.newLine();
+            // write headers
+            bw.newLine();
+            bw.write(response.getBody());
+            bw.flush();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        bw.newLine();
-        bw.flush();
     }
 
 
@@ -105,10 +106,11 @@ public class ClientHandler implements Runnable {
         User u2;
         String sentToken;
         String path = rc.getPath();
+        Response response = new Response();
         switch (path) {
             case ("/users"):
                 u1 = new ObjectMapper().readValue(rc.getBody(), User.class);
-                userService.addUser(u1);
+                sendResponse(userService.addUser(u1));
                 break;
             case ("/sessions"):
                 u1 = new ObjectMapper().readValue(rc.getBody(), User.class);
@@ -188,27 +190,22 @@ public class ClientHandler implements Runnable {
                 }
                 break;
             case ("/battles"):
-                try {
-                    User winner = null;
                     u1 = userService.authenticateUser(rc.getAuthToken());
                     if (u1 != null) {
                         if (u1.deckEmpty()) {
                             System.out.println(u1.getUsername() + "'s deck is not configured");
-                        } else if (blockingQueue.contains(u1)) {
-                            System.out.println("You cant play against yourself!");
                         } else {
-                            blockingQueue.add(u1);
+                            bQPlayers.add(u1);
+                        }
+                        try {
+                            User winner = bqGameResults.take().right();
+                            if(winner != null){
+                                System.out.println(winner.getUsername()+" "+ Thread.currentThread().getName()+ " "+u1.getUsername());
+                            }
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
                         }
                     }
-                    if (blockingQueue.size() >= 2) {
-                        User tempUser1 = (User) blockingQueue.take();
-                        User tempUser2 = (User) blockingQueue.take();
-                        Game round = new Game();
-                        round.startGame(tempUser1, tempUser2);
-                    }
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
                 break;
             case ("/tradings"):
                 u1 = userService.authenticateUser(rc.getAuthToken());

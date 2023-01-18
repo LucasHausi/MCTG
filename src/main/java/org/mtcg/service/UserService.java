@@ -1,5 +1,7 @@
 package org.mtcg.service;
 
+import org.mtcg.HTTP.HttpStatus;
+import org.mtcg.HTTP.Response;
 import org.mtcg.config.DataSource;
 import org.mtcg.repository.InMemoryUserRepository;
 import org.mtcg.repository.PostgresCardRepository;
@@ -20,21 +22,32 @@ public class UserService {
         inMemoryUserRepository.setUsers(postgressUserRepository.getAllUsers());
         inMemoryUserRepository.initializeUserStack();
     }
-    public static UserRepository getIMUR(){
+
+    public static UserRepository getIMUR() {
         return inMemoryUserRepository;
     }
-    public synchronized void addUser(User u1){
+
+    public synchronized Response addUser(User u1) {
+        Response response = new Response();
         User u2 = inMemoryUserRepository.getUserByUsername(u1.getUsername());
         if (u2 == null) {
             inMemoryUserRepository.addUser(u1);
             postgressUserRepository.addUser(u1);
-            System.out.println("The user "+
-                               u1.getUsername()+" was created");
+            System.out.println("The user " +
+                               u1.getUsername() + " was created");
+
+            response.setBody("User successfully created");
+            response.setHttpStatus(HttpStatus.CREATED);
+            return response;
         } else {
             System.out.println("This user does already exist!");
+            response.setBody("User with same username already registered");
+            response.setHttpStatus(HttpStatus.CONFLICT);
+            return response;
         }
     }
-    public synchronized void loginUser(User u1){
+
+    public synchronized void loginUser(User u1) {
         User u2;
         u2 = inMemoryUserRepository.getUserByUsername(u1.getUsername());
         if (u2 == null) {
@@ -47,16 +60,19 @@ public class UserService {
                 System.out.println("Wrong password");
             }
         }
-        inMemoryUserRepository.printIMUserRepository();
+        //inMemoryUserRepository.printIMUserRepository();
     }
-    public synchronized boolean checkAdminToken(String sentToken){
+
+    public synchronized boolean checkAdminToken(String sentToken) {
         return inMemoryUserRepository.checkAdminToken(sentToken);
     }
-    public User getUserByUsername(String username){
+
+    public User getUserByUsername(String username) {
         return inMemoryUserRepository.getUserByUsername(username);
     }
-    public User authenticateUser(String sentToken){
-        if (sentToken != null){
+
+    public User authenticateUser(String sentToken) {
+        if (sentToken != null) {
             if (inMemoryUserRepository.checkAuthToken(sentToken)) {
                 return inMemoryUserRepository.getUserByAuthToken(sentToken);
             } else {
@@ -68,10 +84,11 @@ public class UserService {
             return null;
         }
     }
-    public void scoreBoard(){
+
+    public void scoreBoard() {
         HashMap<String, Integer> sortedMap = this.inMemoryUserRepository.getAllElos();
         sortedMap.forEach((username, elo) -> {
-            System.out.println(username+" "+elo);
+            System.out.println(username + " " + elo);
         });
     }
 }

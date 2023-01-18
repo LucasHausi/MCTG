@@ -7,6 +7,7 @@ public enum HttpStatus {
     BAD_REQUEST(400, "Bad Request"),
     UNAUTHORIZED(401, "Unauthorized"),
     FORBIDDEN(403, "Forbidden"),
+    CONFLICT(409, "Conflict"),
     INTERNAL_SERVER_ERROR(500, "Internal Server Error");
 
     private final int statusCode;
