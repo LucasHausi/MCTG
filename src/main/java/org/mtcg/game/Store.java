@@ -7,6 +7,7 @@ import org.mtcg.repository.PostgresTradeRepository;
 import org.mtcg.user.User;
 import org.mtcg.util.Pair;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -41,6 +42,11 @@ public class Store {
             System.out.println(td);
         }
     }
+
+    public List<TradingDeal> getDeals() {
+        return deals;
+    }
+
     boolean dealExists(UUID id){
         return this.deals.stream()
                 .filter(tempDeal -> id.equals(tempDeal.getId()))

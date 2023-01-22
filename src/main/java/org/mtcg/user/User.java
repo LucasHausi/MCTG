@@ -124,6 +124,10 @@ public class User {
     public Card getCardToAttack() {
         return this.deck.getCardToAttack();
     }
+
+    public Stack getCardStack() {
+        return cardStack;
+    }
     public Deck getDeck(){
         return deck;
     }
@@ -160,22 +164,20 @@ public class User {
     public void loose(){
         this.elo-=5;
     }
-    public void setDeck(List<UUID> cardIDs) {
+    public boolean setDeck(List<UUID> cardIDs) {
         Deck temp = new Deck();
-        boolean error = false;
         for (UUID id : cardIDs) {
             Card c = this.cardStack.getCard(id);
             if (c != null) {
                 temp.addCard(c);
             }else{
                 System.out.println("The user does not own the card: " + id.toString());
-                return;
+                return false;
             }
         }
         //if no error happened add cards to real deck
-        if(!error){
-            this.deck = temp;
-        }
+        this.deck = temp;
+        return true;
     }
     public void clearDeck(){
         this.deck.clearDeck();

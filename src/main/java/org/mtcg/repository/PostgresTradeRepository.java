@@ -40,8 +40,8 @@ public class PostgresTradeRepository {
             throw new IllegalStateException("DB query failed", e);
         }
     }
-    public static List<TradingDeal> getAllTrades(){
-        List<TradingDeal> result = new ArrayList<>();
+    public static ArrayList<TradingDeal> getAllTrades(){
+        ArrayList<TradingDeal> result = new ArrayList<>();
         try (Connection c = dataSource.getConnection()) {
             try (PreparedStatement ps = c.prepareStatement("SELECT * FROM TRADES")) {
                 ps.execute();

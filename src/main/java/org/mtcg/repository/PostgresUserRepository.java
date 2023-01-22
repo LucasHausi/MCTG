@@ -25,6 +25,12 @@ public class PostgresUserRepository implements UserRepository{
             throw new IllegalStateException("Failed to setup up table" + ex1);
         }
     }
+    private final String UPDATE_ELO = """
+            UPDATE USERS
+                    SET ELO = ?
+                    WHERE
+                        USERNAME = ?;
+            """;
     private static final String SETUP_TABLE = """
                 CREATE TABLE IF NOT EXISTS users(
                     username varchar(500)primary key,
@@ -63,6 +69,18 @@ public class PostgresUserRepository implements UserRepository{
                 ps.setString(2, bio);
                 ps.setString(3, image);
                 ps.setString(4, username);
+                ps.execute();
+            }
+        } catch (SQLException e) {
+            throw new IllegalStateException("DB query failed", e);
+        }
+    }
+    public void updateElo(User u1){
+        try (Connection c = dataSource.getConnection()) {
+            try (PreparedStatement ps = c.prepareStatement(UPDATE_ELO)) {
+                System.out.println(u1.getElo()+" "+ u1.getUsername());
+                ps.setInt(1, u1.getElo());
+                ps.setString(2, u1.getUsername());
                 ps.execute();
             }
         } catch (SQLException e) {

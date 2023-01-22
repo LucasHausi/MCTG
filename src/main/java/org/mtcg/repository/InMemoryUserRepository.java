@@ -34,8 +34,10 @@ public class InMemoryUserRepository implements UserRepository{
         }
         return sortedMap;
     }
-    public void addAuthToken(User u){
-        users.put(u, TokenController.generateNewAuthToken(u.getUsername()));
+    public String addAuthToken(User u){
+        String token = TokenController.generateNewAuthToken(u.getUsername());
+        users.put(u, token);
+        return token;
     }
     public void addUser(User u){
         boolean exists = false;

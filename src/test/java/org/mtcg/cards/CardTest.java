@@ -1,6 +1,7 @@
 package org.mtcg.cards;
 
 import org.junit.jupiter.api.Test;
+import org.mtcg.game.BattleLog;
 
 import java.util.UUID;
 
@@ -16,7 +17,7 @@ class CardTest {
         Card tempDragon = new Monstercard(UUID.randomUUID(), 12 ,Elements.Normal, Monsters.Dragon, false);
         //ACT
         //ASSERT
-        assertNull(tempGoblin.attack(tempDragon));
+        assertNull(tempGoblin.attack(tempDragon,new BattleLog()));
 
     }
     @Test
@@ -26,8 +27,8 @@ class CardTest {
         Card tempWizzard = new Monstercard(UUID.randomUUID(), 12 ,Elements.Normal, Monsters.Wizzard, false);
         //ACT
         //ASSERT
-        assertNull(tempOrk.attack(tempWizzard));
-        assertEquals(tempOrk,tempWizzard.attack(tempOrk));
+        assertNull(tempOrk.attack(tempWizzard,new BattleLog()));
+        assertEquals(tempOrk,tempWizzard.attack(tempOrk,new BattleLog()));
 
     }
     @Test
@@ -37,8 +38,8 @@ class CardTest {
         Card tempSpell = new Spellcard(UUID.randomUUID(), 12 ,Elements.Water, false);
         //ACT
         //ASSERT
-        assertEquals(tempSpell,tempSpell.attack(tempKnight));
-        assertEquals(tempSpell,tempKnight.attack(tempSpell));
+        assertEquals(tempSpell,tempSpell.attack(tempKnight,new BattleLog()));
+        assertEquals(tempSpell,tempKnight.attack(tempSpell,new BattleLog()));
 
     }
     @Test
@@ -48,8 +49,8 @@ class CardTest {
         Card tempSpell = new Spellcard(UUID.randomUUID(), 12 ,Elements.Water, false);
         //ACT
         //ASSERT
-        assertEquals(null, tempSpell.attack(tempKraken));
-        assertEquals(null, tempKraken.attack(tempSpell));
+        assertEquals(null, tempSpell.attack(tempKraken,new BattleLog()));
+        assertEquals(null, tempKraken.attack(tempSpell,new BattleLog()));
 
     }
     @Test
@@ -59,8 +60,8 @@ class CardTest {
         Card tempDragon = new Monstercard(UUID.randomUUID(), 12 ,Elements.Normal, Monsters.Dragon, false);
         //ACT
         //ASSERT
-        assertNull(tempDragon.attack(tempElve));
-        assertEquals(tempElve,tempElve.attack(tempDragon));
+        assertNull(tempDragon.attack(tempElve,new BattleLog()));
+        assertEquals(tempElve,tempElve.attack(tempDragon,new BattleLog()));
     }
 
     //test assess element damage behavior
@@ -71,8 +72,8 @@ class CardTest {
         Card tempNormal = new Spellcard(UUID.randomUUID(), 12 ,Elements.Normal, false);
         //ACT
         //ASSERT
-        assertEquals(tempFire,tempFire.attack(tempNormal));
-        assertEquals(tempFire,tempNormal.attack(tempFire));
+        assertEquals(tempFire,tempFire.attack(tempNormal,new BattleLog()));
+        assertEquals(tempFire,tempNormal.attack(tempFire,new BattleLog()));
     }
     @Test
     void waterAgainstFire() {
@@ -81,8 +82,8 @@ class CardTest {
         Card tempWater = new Spellcard(UUID.randomUUID(), 12 ,Elements.Water, false);
         //ACT
         //ASSERT
-        assertEquals(tempWater,tempFire.attack(tempWater));
-        assertEquals(tempWater,tempWater.attack(tempFire));
+        assertEquals(tempWater,tempFire.attack(tempWater,new BattleLog()));
+        assertEquals(tempWater,tempWater.attack(tempFire,new BattleLog()));
     }
     @Test
     void normalAgainstWater() {
@@ -91,8 +92,8 @@ class CardTest {
         Card tempNormal = new Spellcard(UUID.randomUUID(), 12 ,Elements.Normal, false);
         //ACT
         //ASSERT
-        assertEquals(tempNormal,tempNormal.attack(tempWater));
-        assertEquals(tempNormal,tempWater.attack(tempNormal));
+        assertEquals(tempNormal,tempNormal.attack(tempWater,new BattleLog()));
+        assertEquals(tempNormal,tempWater.attack(tempNormal,new BattleLog()));
     }
     @Test
     void draw() {
@@ -101,8 +102,8 @@ class CardTest {
         Card tempNormal = new Spellcard(UUID.randomUUID(), 6 ,Elements.Normal, false);
         //ACT
         //ASSERT
-        assertNull(tempNormal.attack(tempWater));
-        assertNull(tempWater.attack(tempNormal));
+        assertNull(tempNormal.attack(tempWater,new BattleLog()));
+        assertNull(tempWater.attack(tempNormal,new BattleLog()));
     }
     @Test
     void monstersNoElementEffect() {
@@ -111,7 +112,7 @@ class CardTest {
         Card tempNormal = new Monstercard(UUID.randomUUID(), 6 ,Elements.Normal, Monsters.Elve, false);
         //ACT
         //ASSERT
-        assertEquals(tempWater,tempNormal.attack(tempWater));
-        assertEquals(tempWater,tempWater.attack(tempNormal));
+        assertEquals(tempWater,tempNormal.attack(tempWater,new BattleLog()));
+        assertEquals(tempWater,tempWater.attack(tempNormal,new BattleLog()));
     }
 }

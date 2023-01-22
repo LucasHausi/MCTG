@@ -2,15 +2,16 @@ package org.mtcg.game;
 
 import org.mtcg.user.User;
 import org.mtcg.util.Pair;
+import org.mtcg.util.Tripple;
 
 import java.util.concurrent.BlockingQueue;
 
 public class QueueHandler implements Runnable{
     private final BlockingQueue<User> bQPlayers;
-    private final BlockingQueue<Pair<User,User>> bQGameResults;
+    private final BlockingQueue<Tripple<User,User, BattleLog>> bQGameResults;
     private final Game game = new Game();
 
-    public QueueHandler(BlockingQueue<User> bQPlayers, BlockingQueue<Pair<User,User>> bQGameResults) {
+    public QueueHandler(BlockingQueue<User> bQPlayers, BlockingQueue<Tripple<User,User, BattleLog>> bQGameResults) {
         this.bQPlayers = bQPlayers;
         this.bQGameResults = bQGameResults;
     }
@@ -21,10 +22,12 @@ public class QueueHandler implements Runnable{
             try {
                 User tempUser1 = (User) bQPlayers.take();
                 User tempUser2 = (User) bQPlayers.take();
-                User winner = game.startGame(tempUser2, tempUser1);
+                BattleLog battleLog = new BattleLog();
+                User winner = game.startGame(tempUser2, tempUser1, battleLog);
                 System.out.println("Handler finished game");
-                bQGameResults.add(new Pair<>(tempUser1, winner));
-                bQGameResults.add(new Pair<>(tempUser2, winner));
+                battleLog.print();
+                bQGameResults.add(new Tripple<>(tempUser1, winner,battleLog));
+                bQGameResults.add(new Tripple<>(tempUser2, winner,battleLog));
                // notifyAll();
             } catch (InterruptedException e) {
                 System.err.println(e);

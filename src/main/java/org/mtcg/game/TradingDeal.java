@@ -1,5 +1,6 @@
 package org.mtcg.game;
 
+
 import org.mtcg.user.User;
 
 import java.util.UUID;

@@ -1,5 +1,7 @@
 package org.mtcg.cards;
 
+import org.mtcg.game.BattleLog;
+
 import java.util.UUID;
 
 public abstract class Card implements Attackable {
@@ -168,14 +170,15 @@ public abstract class Card implements Attackable {
     public abstract String toPlainString();
     public abstract String toFancyString();
     //could you use an override annotation here?
-    public Card attack(Card opponent){
+    public Card attack(Card opponent, BattleLog battleLog){
         //three cases pure monster fight, pure spell fight, mixed fight
         boolean selfIsMonster = this instanceof Monstercard;
         boolean opponentIsMonster = opponent instanceof Monstercard;
         int wins;
 
         System.out.print(this.toString().concat(" ("));
-        System.out.print(this.damage+" Damage) vs "+ opponent.toString()+" ("+ opponent.damage+" Damage) => ");
+        System.out.print(this.damage+" Damage) vs "+ opponent+" ("+ opponent.damage+" Damage) => ");
+        battleLog.addToLog(this.toString().concat(" (")+this.damage+" Damage) vs "+ opponent+" ("+ opponent.damage+" Damage) => ");
         // pure monster fight
         if(selfIsMonster && opponentIsMonster) {
             //if false is returned here then there is no attack
@@ -194,14 +197,17 @@ public abstract class Card implements Attackable {
                 if(caseResult == 2){
                 Effectiveness e = this.calcElementFactor(opponent);
                 System.out.print(this.damage+" VS "+opponent.damage+" -> ");
+                battleLog.addToLog(this.damage+" VS "+opponent.damage+" -> ");
                 switch (e){
                     case effective:
                         wins = winsBattle(this.damage*2, (opponent.damage/2));
                         System.out.print(this.damage*2+" VS "+ opponent.damage/2+" => ");
+                        battleLog.addToLog(this.damage*2+" VS "+ opponent.damage/2+" => ");
                         break;
                     case not_effective:
                         wins = winsBattle(this.damage/2, (opponent.damage*2));
                         System.out.print(this.damage/2+" VS "+ opponent.damage*2+" => ");
+                        battleLog.addToLog(this.damage/2+" VS "+ opponent.damage*2+" => ");
                         break;
                     default:
                         wins = winsBattle(this.damage, opponent.damage);

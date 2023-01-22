@@ -40,7 +40,7 @@ public class PostgresCardRepository {
     private final String ADD_CARD = """
             INSERT INTO CARDS VALUES (?, ?, ? ,?, ?, ?);
             """;
-    public void addPackage(Package p){
+    public boolean addPackage(Package p){
         try (Connection c = dataSource.getConnection()) {
             for(Card card : p.getCards()){
                 try (PreparedStatement ps = c.prepareStatement(ADD_CARD)) {
@@ -61,8 +61,10 @@ public class PostgresCardRepository {
             }
 
         } catch (SQLException e) {
-            throw new IllegalStateException("DB query failed", e);
+            //should fail because of duplicate entry
+            return false;
         }
+        return true;
     }
     //gets all ownerless cards and adds them to the store
     public static ArrayList<Package> getAllPackages(){
@@ -129,15 +131,17 @@ public class PostgresCardRepository {
         }
         return s;
     }
-    public void setLock(Boolean lock, String id){
+    public boolean setLock(Boolean lock, String id){
         try (Connection c = dataSource.getConnection()) {
             try (PreparedStatement ps = c.prepareStatement(SET_LOCK)) {
                 ps.setBoolean(1, lock);
                 ps.setString(2, id);
                 ps.execute();
+                return true;
             }
         } catch (SQLException e) {
-            throw new IllegalStateException("DB query failed", e);
+            System.err.println("DB query failed"+ e);
+            return false;
         }
     }
     public void setOwner(Card card, User u){

@@ -16,7 +16,18 @@ public class Deck {
     {
         this.cards.add(c);
     }
-
+    public String getDeckinPlain(){
+        String result = "";
+        if(this.cards.isEmpty()){
+            result = "The deck is currently empty";
+        }else{
+            for(Card c : cards)
+            {
+                result += c.toFancyString()+"\n";
+            }
+        }
+        return result;
+    }
     public Card getCardToAttack(){
         Random rand = new Random();
         int randIndex = rand.nextInt(0, this.cards.size());
@@ -38,6 +49,11 @@ public class Deck {
         }
         return false;
     }
+
+    public ArrayList<Card> getCards() {
+        return cards;
+    }
+
     public void clearDeck(){
         this.cards.clear();
     }

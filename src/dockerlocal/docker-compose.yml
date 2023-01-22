@@ -1,7 +1,7 @@
 version: '3.1'
 
 services:
-  db-class-http:
+  db-class:
     image: postgres:15.1
     restart: always
     environment:
@@ -12,6 +12,19 @@ services:
       - '5432:5432'
     volumes:
       - db_class:/var/lib/postgresql/data
+  testdb:
+    image: postgres:15.1
+    restart: always
+    environment:
+      POSTGRES_USER: testUser
+      POSTGRES_PASSWORD: secret5
+      POSTGRES_DB: mctgDBTest
+    ports:
+      - '5431:5432'
+    volumes:
+      - testdb2:/var/lib/postgresql/data
 volumes:
   db_class:
+    driver: local
+  testdb2:
     driver: local
