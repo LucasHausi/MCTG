@@ -113,7 +113,7 @@ public class UserService {
         }
         return response;
     }
-    public void persistBattle(BattleLog battleLog, User winner){
-        postgresBattleRepository.addBattle(battleLog,winner);
+    public void persistBattle(BattleLog battleLog, String result, User user){
+        postgresBattleRepository.addBattle(battleLog, result, user);
     }
 }

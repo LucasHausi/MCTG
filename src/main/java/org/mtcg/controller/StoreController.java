@@ -57,7 +57,6 @@ public class StoreController {
         Response response = new Response();
         List<TradingDeal> deals= store.getDeals();
         if(!deals.isEmpty()){
-            ObjectMapper objectMapper = new ObjectMapper();
             try {
                 JSONArray resArray = new JSONArray();
                 for (TradingDeal d : deals){

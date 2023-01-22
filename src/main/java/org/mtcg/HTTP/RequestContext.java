@@ -28,10 +28,6 @@ public class RequestContext {
         this.path = path;
     }
 
-    public List<Header> getHeaders() {
-        return headers;
-    }
-
     public void setHeaders(List<Header> headers) {
         this.headers = headers;
     }
@@ -60,10 +56,12 @@ public class RequestContext {
                 .orElse(0);
     }
 
+    //DEV Functions
+    /*
     public void print(){
         System.out.println("Method: " + this.httpVerb);
         System.out.println("Path: "+ this.path);
         System.out.println("Body: "+ this.body);
         System.out.println("Headers:" + this.headers);
-    }
+    }*/
 }

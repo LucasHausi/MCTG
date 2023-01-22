@@ -152,7 +152,7 @@ public class PostgresCardRepository {
                 ps.execute();
             }
         } catch (SQLException e) {
-            throw new IllegalStateException("DB query failed", e);
+            System.err.println("Error when setting owner");
         }
     }
     public static void addOwnerToPackage(Package p, User u){

@@ -83,9 +83,10 @@ public class InMemoryUserRepository implements UserRepository{
         });
     }
     //DEV Functions
+    /*
     public void printIMUserRepository(){
         this.users.entrySet().forEach(entry -> {
             System.out.println(entry.getKey().getUsername() + " " + entry.getValue());
         });
-    }
+    }*/
 }

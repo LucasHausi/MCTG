@@ -18,7 +18,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class PostgresCardRepositoryTest {
     //need to create UserRepo first because of fk constraint
-    private PostgresUserRepository postgresUserRepository = new PostgresUserRepository(TestDataSource.getInstance());
     private PostgresCardRepository postgresCardRepository
             = new PostgresCardRepository(TestDataSource.getInstance());
 

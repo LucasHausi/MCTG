@@ -121,10 +121,6 @@ public class User {
     public void setCardStack(Stack cardStack) {
         this.cardStack = cardStack;
     }
-    public Card getCardToAttack() {
-        return this.deck.getCardToAttack();
-    }
-
     public Stack getCardStack() {
         return cardStack;
     }
@@ -148,9 +144,6 @@ public class User {
     }
     public String getUsername() {
         return username;
-    }
-    public void printStats(){
-        System.out.println("The elo of "+this.nickname+" is: "+this.elo);
     }
     public boolean lockCard(String strCardID){
        return this.cardStack.lockCard(strCardID);
@@ -179,9 +172,6 @@ public class User {
         this.deck = temp;
         return true;
     }
-    public void clearDeck(){
-        this.deck.clearDeck();
-    }
     public void acquirePackage(Package p) {
         boolean errWhenAddingCards = false;
         //variable to store the amount of successful purchased cards
@@ -209,9 +199,6 @@ public class User {
         } else {
             return false;
         }
-    }
-    public void printStack() {
-        this.cardStack.printStack();
     }
     public void printDeck() {
         System.out.println("This is " + username + "'s deck: ");
@@ -254,6 +241,12 @@ public class User {
     public void printDeckSize() {
         System.out.println(this.username + " Deck Size: " + this.deck.getDeckSize());
     }
+    public void printStack() {
+        this.cardStack.printStack();
+    }
+    public void printStats(){
+        System.out.println("The elo of "+this.nickname+" is: "+this.elo);
+    }
 
     public void copyCardsToDeck(int[] cardIndexes) {
         for (int index : cardIndexes) {
@@ -265,7 +258,7 @@ public class User {
             this.cardStack.removeCard(c);
         }
     }
-
+    /*
     public void chooseDeck() {
         boolean finished = false;
         System.out.println(this.username.concat(" please choose the cards for your deck: "));
@@ -281,5 +274,5 @@ public class User {
                 this.processDeckSelection(input);
             }
         }
-    }
+    }*/
 }

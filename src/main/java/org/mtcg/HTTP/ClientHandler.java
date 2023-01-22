@@ -282,10 +282,15 @@ public class ClientHandler implements Runnable {
                                 //persist elo
                                 userService.persistElo(u1);
                                 //persist Battle
-                                userService.persistBattle(battleLog,winner);
+                                if(winner.getUsername() == u1.getUsername()){
+                                    userService.persistBattle(battleLog,"Win",u1);
+                                }else{
+                                    userService.persistBattle(battleLog,"Loose",u1);
+                                }
+
                             }else{
                                 response.setBody("It was a draw"+"\n");
-                                userService.persistBattle(battleLog,null);
+                                userService.persistBattle(battleLog,"Draw", u1);
                             }
                             sendResponse(response);
                         } catch (InterruptedException e) {

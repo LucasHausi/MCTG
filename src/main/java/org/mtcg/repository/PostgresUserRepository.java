@@ -154,6 +154,7 @@ public class PostgresUserRepository implements UserRepository{
         }
     }
     //DEV Function
+    /*
     public void PRINT_ALL_USERS(){
         try (Connection c = dataSource.getConnection()) {
             try (PreparedStatement ps = c.prepareStatement(ALL_USERS)) {
@@ -166,7 +167,7 @@ public class PostgresUserRepository implements UserRepository{
         } catch (SQLException e) {
             throw new IllegalStateException("DB query failed", e);
         }
-    }
+    }*/
 
 
 

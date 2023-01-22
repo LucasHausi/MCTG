@@ -34,15 +34,8 @@ public class SimpleCard {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public float getDamage() {
         return damage;
     }
 
-    public void setDamage(float damage) {
-        this.damage = damage;
-    }
 }
